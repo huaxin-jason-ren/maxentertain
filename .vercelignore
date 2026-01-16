@@ -1,0 +1,7 @@
+# Exclude large source-photo directories and local-only assets from Vercel uploads.
+# (Only `public/` images are needed by the app.)
+Airbnb Photos/
+node_modules/
+.next/
+coverage/
+

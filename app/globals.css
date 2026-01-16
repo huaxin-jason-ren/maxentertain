@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-white text-luxury-dark font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-luxury-gold text-white px-8 py-4 rounded-lg font-semibold 
+           hover:bg-opacity-90 transition-all duration-300 
+           shadow-lg hover:shadow-xl transform hover:-translate-y-1;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent border-2 border-luxury-gold text-luxury-gold 
+           px-8 py-4 rounded-lg font-semibold 
+           hover:bg-luxury-gold hover:text-white transition-all duration-300;
+  }
+  
+  .section-padding {
+    @apply py-20 px-4 md:px-8 lg:px-16;
+  }
+  
+  .container-custom {
+    @apply max-w-7xl mx-auto;
+  }
+  
+  .heading-primary {
+    @apply text-4xl md:text-5xl lg:text-6xl font-serif font-bold 
+           text-luxury-dark mb-6;
+  }
+  
+  .heading-secondary {
+    @apply text-3xl md:text-4xl font-serif font-semibold 
+           text-luxury-dark mb-4;
+  }
+  
+  .text-luxury {
+    @apply text-lg md:text-xl text-gray-700 leading-relaxed;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b8941f;
+}
+
+/* Award badge animation */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+
+
+
+
