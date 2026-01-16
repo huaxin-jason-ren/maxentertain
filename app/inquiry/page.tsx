@@ -35,7 +35,7 @@ export default function InquiryPage() {
               <div className="text-left">
                 <h1 className="text-3xl md:text-4xl font-serif font-bold text-white drop-shadow-2xl mb-3">
                   Your journey starts here
-                </h1>
+            </h1>
                 <p className="text-white/90 text-base md:text-lg drop-shadow">
                   Stay at the top-rated luxury stay on the Mornington Peninsula.
                 </p>
