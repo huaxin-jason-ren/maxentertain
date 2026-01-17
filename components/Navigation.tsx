@@ -37,11 +37,11 @@ export default function Navigation() {
       }`}
     >
       <div className="container-custom px-4 md:px-8 lg:px-16">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between min-h-20 py-3 md:py-0">
           {/* Logo */}
           <Link
             href="/"
-            className={`inline-flex items-center gap-3 text-2xl font-serif font-bold transition-colors ${
+            className={`flex items-center gap-2 md:gap-3 text-2xl font-serif font-bold transition-colors min-w-0 ${
               isScrolled ? 'text-luxury-dark' : 'text-white drop-shadow-lg'
             }`}
           >
@@ -55,8 +55,14 @@ export default function Navigation() {
                 priority
               />
             </span>
-            <span className="hidden sm:inline">Max Entertain</span>
-            <span className="sm:hidden">Max</span>
+            {/* Desktop */}
+            <span className="hidden md:inline whitespace-nowrap">
+              Award Winning Luxury Holiday Escape
+            </span>
+            {/* Mobile: allow wrap (prevents “single letter” collapse + overlap) */}
+            <span className="md:hidden block min-w-0 max-w-[70vw] text-sm font-serif font-bold leading-tight whitespace-normal break-words">
+              Award Winning Luxury Holiday Escape
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -86,10 +92,12 @@ export default function Navigation() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`md:hidden p-2 transition-colors ${
+            className={`md:hidden p-2 transition-colors flex-shrink-0 ${
               isScrolled ? 'text-luxury-dark' : 'text-white'
             }`}
             aria-label="Toggle menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -100,6 +108,7 @@ export default function Navigation() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
+            id="mobile-nav"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -119,9 +128,9 @@ export default function Navigation() {
               <Link
                 href="/inquiry"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="btn-primary w-full text-center"
+                className="btn-primary w-full flex items-center justify-center gap-2 text-center"
               >
-                <Calendar size={16} className="inline mr-2" />
+                <Calendar size={16} />
                 Send Inquiry
               </Link>
             </div>
