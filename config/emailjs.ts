@@ -12,7 +12,7 @@ export type EmailJsConfig = {
  * - Defaults are used when env vars are not present.
  */
 export const emailJsConfig: EmailJsConfig = {
-  serviceId: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'service_r9h3w9r',
+  serviceId: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'service_tjxqmvk',
   templateId: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || 'template_bp3ysul',
   publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || 'Qd4vqOv_XHXYx5YDS',
 }
