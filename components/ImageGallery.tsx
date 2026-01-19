@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -24,29 +24,9 @@ export default function ImageGallery() {
   }
 
   // (lightbox handlers removed)
-  const totalImages = images.length
   const mobileScrollerRef = useRef<HTMLDivElement | null>(null)
   const [mobileIndex, setMobileIndex] = useState(0)
-
-  const mobileDotIndices = useMemo(() => {
-    // Don’t render 50+ dots; show a compact “window” around the current slide.
-    const MAX_DOTS = 7
-    if (totalImages <= MAX_DOTS) return Array.from({ length: totalImages }, (_, i) => i)
-    const half = Math.floor(MAX_DOTS / 2)
-    let start = Math.max(0, mobileIndex - half)
-    let end = Math.min(totalImages - 1, start + MAX_DOTS - 1)
-    start = Math.max(0, end - (MAX_DOTS - 1))
-    const out: number[] = []
-    for (let i = start; i <= end; i++) out.push(i)
-    return out
-  }, [mobileIndex, totalImages])
-
-  const scrollToMobileIndex = (idx: number) => {
-    const el = mobileScrollerRef.current
-    if (!el) return
-    const clamped = Math.max(0, Math.min(totalImages - 1, idx))
-    el.scrollTo({ left: clamped * el.clientWidth, behavior: 'smooth' })
-  }
+  const totalImages = images.length
 
   return (
     <>
@@ -99,7 +79,7 @@ export default function ImageGallery() {
                     key={index}
                     href="/photos"
                     className="relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden"
-                    aria-label={`Open all photos (photo ${index + 1} of ${totalImages})`}
+                    aria-label={`Open all photos (photo ${index + 1})`}
                   >
                     <Image
                       src={image}
@@ -120,27 +100,6 @@ export default function ImageGallery() {
                 ))}
               </div>
             </div>
-
-            {totalImages > 1 && (
-              <div className="mt-3 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  {mobileDotIndices.map((idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => scrollToMobileIndex(idx)}
-                      className={`h-2.5 w-2.5 rounded-full transition-colors ${
-                        idx === mobileIndex ? 'bg-luxury-gold' : 'bg-gray-300'
-                      }`}
-                      aria-label={`Go to photo ${idx + 1}`}
-                    />
-                  ))}
-                </div>
-                <div className="text-sm text-gray-600 tabular-nums">
-                  {mobileIndex + 1} / {totalImages}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Desktop: current grid */}

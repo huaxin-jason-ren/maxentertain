@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
@@ -21,21 +21,6 @@ export default function PhotosGallery() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
   const totalImages = images.length
-
-  const mobileScrollerRef = useRef<HTMLDivElement | null>(null)
-  const [mobileIndex, setMobileIndex] = useState(0)
-
-  const mobileDotIndices = useMemo(() => {
-    const MAX_DOTS = 7
-    if (totalImages <= MAX_DOTS) return Array.from({ length: totalImages }, (_, i) => i)
-    const half = Math.floor(MAX_DOTS / 2)
-    let start = Math.max(0, mobileIndex - half)
-    let end = Math.min(totalImages - 1, start + MAX_DOTS - 1)
-    start = Math.max(0, end - (MAX_DOTS - 1))
-    const out: number[] = []
-    for (let i = start; i <= end; i++) out.push(i)
-    return out
-  }, [mobileIndex, totalImages])
 
   const close = () => setActiveIndex(null)
   const prev = () =>
@@ -69,65 +54,26 @@ export default function PhotosGallery() {
 
   return (
     <>
-      {/* Mobile: 1-photo-at-a-time carousel (swipe + dots + count, no scrollbar) */}
-      <div className="md:hidden">
-        <div className="rounded-xl overflow-hidden">
-          <div
-            ref={mobileScrollerRef}
-            className="no-scrollbar flex w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth"
-            onScroll={() => {
-              const el = mobileScrollerRef.current
-              if (!el) return
-              const nextIdx = Math.round(el.scrollLeft / el.clientWidth)
-              const clamped = Math.max(0, Math.min(totalImages - 1, nextIdx))
-              if (clamped !== mobileIndex) setMobileIndex(clamped)
-            }}
-          >
-            {images.map((src, idx) => (
-              <div key={idx} className="relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden">
-                <Image
-                  src={src}
-                  alt={`${propertyConfig.name} - Photo ${idx + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="100vw"
-                  loading="lazy"
-                  quality={70}
-                  unoptimized={false}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.src = hdImages[idx] || '/images/placeholder.jpg'
-                  }}
-                />
-              </div>
-            ))}
+      {/* Mobile: show ALL photos (2 per row) */}
+      <div className="md:hidden grid grid-cols-2 gap-3">
+        {images.map((src, idx) => (
+          <div key={idx} className="relative aspect-[4/3] w-full rounded-xl overflow-hidden">
+            <Image
+              src={src}
+              alt={`${propertyConfig.name} - Photo ${idx + 1}`}
+              fill
+              className="object-cover"
+              sizes="50vw"
+              loading="lazy"
+              quality={70}
+              unoptimized={false}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.src = hdImages[idx] || '/images/placeholder.jpg'
+              }}
+            />
           </div>
-        </div>
-
-        {totalImages > 1 && (
-          <div className="mt-3 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              {mobileDotIndices.map((idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    const el = mobileScrollerRef.current
-                    if (!el) return
-                    el.scrollTo({ left: idx * el.clientWidth, behavior: 'smooth' })
-                  }}
-                  className={`h-2.5 w-2.5 rounded-full transition-colors ${
-                    idx === mobileIndex ? 'bg-luxury-gold' : 'bg-gray-300'
-                  }`}
-                  aria-label={`Go to photo ${idx + 1}`}
-                />
-              ))}
-            </div>
-            <div className="text-sm text-gray-600 tabular-nums">
-              {mobileIndex + 1} / {totalImages}
-            </div>
-          </div>
-        )}
+        ))}
       </div>
 
       {/* Desktop/tablet: grid (with click-to-enlarge on desktop) */}
