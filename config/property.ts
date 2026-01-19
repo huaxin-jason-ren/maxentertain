@@ -125,7 +125,7 @@ There’s something for every age — no one will be bored here!
 
 📍 Perfect Family Location:
 
-- 🌊 Just 20 metres to the beach — safe, easy access for children
+- 🌊 Just 10 metres to the beach — safe, easy access for children
 - ♨️ Only 7–8 minutes to famous hot springs
 - 🛍 2 km to Rye town centre
 - 🛒 6 minutes to supermarkets & shopping
@@ -187,7 +187,7 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
     "Pool Table",
     "Foosball Table",
     "Sea View",
-    "Beach Access (20m walk)",
+    "Beach Access (10m walk)",
     "Pet Friendly (Pets Welcome)",
   ],
   policies: {
@@ -312,7 +312,7 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
     title: "Explore the Mornington Peninsula",
     description: "The Mornington Peninsula has long been a favourite destination for coastal holidays and cosy winter escapes. In the warmer months, swimming and surf beaches await whilst seaside restaurants and local markets provide an array of places to eat and drink.",
     attractions: [
-      { name: "Beach", distance: "20m walk", type: "beach" },
+      { name: "Beach", distance: "10m walk", type: "beach" },
       { name: "Peninsular Hot Springs", distance: "8 min drive", type: "attraction" },
       { name: "Alba Thermal Springs and Spa", distance: "7 min drive", type: "attraction" },
       { name: "Rye Center", distance: "2 km", type: "shopping" },

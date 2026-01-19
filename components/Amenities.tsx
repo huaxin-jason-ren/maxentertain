@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { propertyConfig } from '@/config/property'
 // React Icons - Font Awesome for more illustrative icons
 import { 
@@ -125,37 +124,20 @@ export default function Amenities() {
   return (
     <section id="amenities" className="section-padding bg-gradient-to-b from-white to-luxury-light">
       <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <h2 className="heading-primary">Amenities & Features</h2>
           <p className="text-luxury text-gray-600 max-w-2xl mx-auto">
             Everything you need for a comfortable and memorable stay
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-        >
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {propertyConfig.amenities.map((amenity, index) => {
             const Icon = getIcon(amenity)
             return (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer group"
+                className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer group hover:-translate-y-1 hover:scale-[1.02]"
               >
                 <div className="flex flex-col items-center text-center">
                   <div className="w-16 h-16 bg-luxury-gold/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-luxury-gold/20 transition-colors">
@@ -165,10 +147,10 @@ export default function Amenities() {
                     {amenity}
                   </span>
                 </div>
-              </motion.div>
+              </div>
             )
           })}
-        </motion.div>
+        </div>
       </div>
     </section>
   )

@@ -148,14 +148,14 @@ export default function InquiryForm({
     setSubmitErrorMessage('')
 
     try {
-      // EmailJS configuration (set in `.env.local`)
+      // EmailJS configuration (client-side env vars; must be set in your hosting provider in production)
       const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID
       const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
       const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
 
       if (!serviceId || !templateId || !publicKey) {
         throw new Error(
-          'Missing EmailJS configuration. Please set NEXT_PUBLIC_EMAILJS_SERVICE_ID, NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, and NEXT_PUBLIC_EMAILJS_PUBLIC_KEY in .env.local, then restart the dev server.'
+          'Email service is not configured. Please set NEXT_PUBLIC_EMAILJS_SERVICE_ID, NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, and NEXT_PUBLIC_EMAILJS_PUBLIC_KEY in your deployment environment (and add your production domain to EmailJS Allowed Origins).'
         )
       }
 
@@ -187,10 +187,12 @@ export default function InquiryForm({
       setErrors({})
     } catch (error) {
       const err = error as any
+      const rawMessage = err?.text || err?.message || ''
+      const status = err?.status
       const message =
-        err?.text ||
-        err?.message ||
-        'Unknown error (check browser console for details).'
+        status === 403 || /origin|domain|not allowed/i.test(String(rawMessage))
+          ? 'Email service blocked this domain. In EmailJS, add your production site URL to Allowed Origins / Domains, then redeploy.'
+          : rawMessage || 'Email service unavailable. Please try again later or email us directly.'
       console.error('EmailJS error:', error)
       setSubmitErrorMessage(String(message))
       setSubmitStatus('error')
@@ -408,6 +410,14 @@ export default function InquiryForm({
                       <p className="text-red-600 text-sm mt-1">
                         {submitErrorMessage || 'Please check your EmailJS configuration or try again later.'}
                       </p>
+                      <div className="mt-3">
+                        <a
+                          href={`mailto:${propertyConfig.contact.email}`}
+                          className="inline-flex text-sm font-semibold text-luxury-gold hover:underline"
+                        >
+                          Email us directly: {propertyConfig.contact.email}
+                        </a>
+                      </div>
                     </div>
                   </div>
                 )}
