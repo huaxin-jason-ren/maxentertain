@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import emailjs from '@emailjs/browser'
 import { propertyConfig } from '@/config/property'
+import { emailJsConfig } from '@/config/emailjs'
 
 // Note: this component runs client-side. We init EmailJS in an effect to match
 // @emailjs/browser v4 API and to ensure it only runs in the browser.
@@ -43,10 +44,7 @@ export default function InquiryForm({
   const [errors, setErrors] = useState<Partial<FormData>>({})
 
   useEffect(() => {
-    const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
-    if (publicKey) {
-      emailjs.init({ publicKey })
-    }
+    if (emailJsConfig.publicKey) emailjs.init({ publicKey: emailJsConfig.publicKey })
   }, [])
 
   const formatPhoneNumber = (value: string): string => {
@@ -148,14 +146,11 @@ export default function InquiryForm({
     setSubmitErrorMessage('')
 
     try {
-      // EmailJS configuration (client-side env vars; must be set in your hosting provider in production)
-      const serviceId = 'service_r9h3w9r'
-      const templateId = 'template_bp3ysul'
-      const publicKey = 'Qd4vqOv_XHXYx5YDS'
+      const { serviceId, templateId, publicKey } = emailJsConfig
 
       if (!serviceId || !templateId || !publicKey) {
         throw new Error(
-          'Email service is not configured. Please set NEXT_PUBLIC_EMAILJS_SERVICE_ID, NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, and NEXT_PUBLIC_EMAILJS_PUBLIC_KEY in your deployment environment (and add your production domain to EmailJS Allowed Origins).'
+          'Email service is not configured. Please verify EmailJS configuration and Allowed Origins / Domains.'
         )
       }
 
