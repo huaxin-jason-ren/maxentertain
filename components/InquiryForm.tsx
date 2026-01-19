@@ -149,9 +149,9 @@ export default function InquiryForm({
 
     try {
       // EmailJS configuration (client-side env vars; must be set in your hosting provider in production)
-      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID
-      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
-      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
+      const serviceId = 'service_r9h3w9r'
+      const templateId = 'template_bp3ysul'
+      const publicKey = 'Qd4vqOv_XHXYx5YDS'
 
       if (!serviceId || !templateId || !publicKey) {
         throw new Error(
