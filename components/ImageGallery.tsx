@@ -27,6 +27,8 @@ export default function ImageGallery() {
   const mobileScrollerRef = useRef<HTMLDivElement | null>(null)
   const [mobileIndex, setMobileIndex] = useState(0)
   const totalImages = images.length
+  const DESKTOP_VISIBLE = 9
+  const desktopImages = images.slice(0, DESKTOP_VISIBLE)
 
   return (
     <>
@@ -103,37 +105,47 @@ export default function ImageGallery() {
           </div>
 
           {/* Desktop: current grid */}
-          <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {images.map((image, index) => (
-              <div
-                key={index}
-                className="relative aspect-[4/3] rounded-xl overflow-hidden"
-              >
-                <Image
-                  src={image}
-                  alt={`${propertyConfig.name} - Gallery Image ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1200px) 50vw, 33vw"
-                  loading="lazy"
-                  quality={70}
-                  unoptimized={false}
-                  placeholder="blur"
-                  blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23ddd' width='400' height='300'/%3E%3C/svg%3E"
-                  onError={(e) => {
-                    // Fallback to HD version if compressed fails
-                    const target = e.target as HTMLImageElement
-                    const hdFallback = getHdImage(index)
-                    if (hdFallback && hdFallback !== '/images/placeholder.jpg') {
-                      target.src = hdFallback
-                    } else {
-                      target.src =
-                        'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600"%3E%3Crect fill="%23ddd" width="800" height="600"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="20" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EProperty Image%3C/text%3E%3C/svg%3E'
-                    }
-                  }}
-                />
+          <div className="hidden md:block">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              {desktopImages.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-[4/3] rounded-xl overflow-hidden"
+                >
+                  <Image
+                    src={image}
+                    alt={`${propertyConfig.name} - Gallery Image ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1200px) 50vw, 33vw"
+                    loading="lazy"
+                    quality={70}
+                    unoptimized={false}
+                    placeholder="blur"
+                    blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23ddd' width='400' height='300'/%3E%3C/svg%3E"
+                    onError={(e) => {
+                      // Fallback to HD version if compressed fails
+                      const target = e.target as HTMLImageElement
+                      const hdFallback = getHdImage(index)
+                      if (hdFallback && hdFallback !== '/images/placeholder.jpg') {
+                        target.src = hdFallback
+                      } else {
+                        target.src =
+                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600"%3E%3Crect fill="%23ddd" width="800" height="600"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="20" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EProperty Image%3C/text%3E%3C/svg%3E'
+                      }
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {images.length > DESKTOP_VISIBLE && (
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <Link href="/photos" className="btn-primary">
+                  View all photos
+                </Link>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>

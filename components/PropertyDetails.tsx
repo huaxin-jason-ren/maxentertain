@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Bed, Bath, Users, MapPin } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
@@ -10,6 +11,15 @@ export default function PropertyDetails() {
     { icon: Bath, label: 'Bathrooms', value: propertyConfig.bathrooms },
     { icon: Users, label: 'Max Guests', value: `${propertyConfig.maxGuests}+` },
   ]
+
+  const [showAllAbout, setShowAllAbout] = useState(false)
+  const ABOUT_MAX_LINES = 26
+
+  const aboutLines = useMemo(() => propertyConfig.longDescription.split('\n'), [])
+  const visibleAboutLines = useMemo(
+    () => (showAllAbout ? aboutLines : aboutLines.slice(0, ABOUT_MAX_LINES)),
+    [aboutLines, showAllAbout]
+  )
 
   return (
     <section id="details" className="section-padding bg-white">
@@ -76,7 +86,7 @@ export default function PropertyDetails() {
           <div className="bg-gradient-to-br from-luxury-light/30 via-white to-luxury-light/20 p-8 md:p-12 rounded-3xl shadow-lg border border-luxury-gold/10">
             <div className="text-gray-700">
               <div className="text-base md:text-lg lg:text-xl font-sans font-light tracking-wide">
-                {propertyConfig.longDescription.split('\n').map((line, index) => {
+                {visibleAboutLines.map((line, index) => {
                   const trimmedLine = line.trim()
                   
                   // Style headings (lines ending with ? or :, or short uppercase lines)
@@ -115,6 +125,19 @@ export default function PropertyDetails() {
                 })}
               </div>
             </div>
+
+            {aboutLines.length > ABOUT_MAX_LINES && (
+              <div className="mt-8 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllAbout((v) => !v)}
+                  className="btn-secondary"
+                  aria-expanded={showAllAbout}
+                >
+                  {showAllAbout ? 'Show less' : 'Show more'}
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
 

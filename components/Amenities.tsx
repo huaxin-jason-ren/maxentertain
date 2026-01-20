@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { propertyConfig } from '@/config/property'
 // React Icons - Font Awesome for more illustrative icons
 import { 
@@ -121,6 +122,15 @@ const getIcon = (amenity: string) => {
 }
 
 export default function Amenities() {
+  const INITIAL_VISIBLE = 12
+  const [showAll, setShowAll] = useState(false)
+
+  const allAmenities = propertyConfig.amenities
+  const visibleAmenities = useMemo(
+    () => (showAll ? allAmenities : allAmenities.slice(0, INITIAL_VISIBLE)),
+    [allAmenities, showAll]
+  )
+
   return (
     <section id="amenities" className="section-padding bg-gradient-to-b from-white to-luxury-light">
       <div className="container-custom">
@@ -131,8 +141,8 @@ export default function Amenities() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {propertyConfig.amenities.map((amenity, index) => {
+        <div id="amenities-grid" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {visibleAmenities.map((amenity, index) => {
             const Icon = getIcon(amenity)
             return (
               <div
@@ -151,6 +161,20 @@ export default function Amenities() {
             )
           })}
         </div>
+
+        {allAmenities.length > INITIAL_VISIBLE && (
+          <div className="mt-10 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="btn-secondary"
+              aria-expanded={showAll}
+              aria-controls="amenities-grid"
+            >
+              {showAll ? 'Show fewer amenities' : `Show all amenities (${allAmenities.length})`}
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )
