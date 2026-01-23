@@ -179,7 +179,7 @@ export default function DatePicker({
                     selected
                       ? 'bg-luxury-gold/25 ring-2 ring-luxury-gold text-luxury-dark'
                       : disabledDay
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? 'bg-red-100 text-red-600 cursor-not-allowed'
                       : 'bg-green-50 text-green-800 hover:bg-green-100'
                   }`}
                   aria-label={`Select ${dayStr}`}
