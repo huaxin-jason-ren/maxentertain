@@ -6,17 +6,28 @@ import { Calendar as CalendarIcon, RefreshCw } from 'lucide-react'
 import { blockedDates as defaultBlockedDates } from '@/config/property'
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, isPast, isToday, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz'
+import { useAvailability } from '@/hooks/useAvailability'
 
-export default function Calendar() {
+export default function Calendar({
+  blockedDates: blockedDatesProp,
+  isLoading: isLoadingProp,
+  lastUpdated: lastUpdatedProp,
+}: {
+  blockedDates?: string[]
+  isLoading?: boolean
+  lastUpdated?: string | null
+}) {
   // Australian timezone (Victoria uses Australia/Melbourne)
   const australianTimezone = 'Australia/Melbourne'
+
+  const availability = useAvailability({ enabled: blockedDatesProp === undefined })
   
   // Get current date in Australian timezone
   const nowAU = toZonedTime(new Date(), australianTimezone)
   const [currentMonth, setCurrentMonth] = useState(nowAU)
-  const [blockedDates, setBlockedDates] = useState<string[]>(defaultBlockedDates)
-  const [isLoading, setIsLoading] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const blockedDates = blockedDatesProp ?? availability.blockedDates
+  const isLoading = isLoadingProp ?? availability.isLoading
+  const lastUpdated = lastUpdatedProp ?? availability.lastUpdated
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
@@ -69,36 +80,6 @@ export default function Calendar() {
   const prevMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1))
   }
-
-  // Fetch blocked dates from iCal feed
-  useEffect(() => {
-    const fetchBlockedDates = async () => {
-      try {
-        setIsLoading(true)
-        const response = await fetch('/api/calendar')
-        
-        if (response.ok) {
-          const data = await response.json()
-          setBlockedDates(data.blockedDates || [])
-          setLastUpdated(data.lastUpdated || null)
-        } else {
-          console.warn('Failed to fetch calendar data, using default blocked dates')
-          setBlockedDates(defaultBlockedDates)
-        }
-      } catch (error) {
-        console.error('Error fetching calendar:', error)
-        setBlockedDates(defaultBlockedDates)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchBlockedDates()
-    
-    // Refresh every hour
-    const interval = setInterval(fetchBlockedDates, 3600000)
-    return () => clearInterval(interval)
-  }, [])
 
   return (
     <section id="calendar" className="section-padding bg-white">
@@ -226,6 +207,11 @@ export default function Calendar() {
                   Last updated: {format(new Date(lastUpdated), 'MMM d, yyyy h:mm a')}
                 </p>
               )}
+
+              <p className="text-xs text-gray-600 text-center mt-3">
+                Minimum stay starts at <span className="font-semibold">2 nights</span>. During school holidays, minimum nights typically range from{' '}
+                <span className="font-semibold">3–5 nights</span> — please reach out for the exact minimum stay for your dates.
+              </p>
             </div>
           </div>
         </motion.div>

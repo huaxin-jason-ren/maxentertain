@@ -62,8 +62,6 @@ export interface PropertyConfig {
     category: string;
     image?: string; // Path to award image
   }[];
-  // iCal feed URLs for automatic calendar sync (Airbnb, Booking.com, VRBO, etc.)
-  icalUrls?: string[];
 }
 
 export const propertyConfig: PropertyConfig = {
@@ -339,12 +337,6 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
       category: "Best Family Friendly Stay",
       image: "/images/awards/airbnb_award.jpg",
     },
-  ],
-  // iCal feed URLs for automatic calendar sync (Airbnb, Booking.com, VRBO, etc.)
-  icalUrls: [
-    "https://www.airbnb.com/calendar/ical/1043607785247725387.ics?t=f6e91ce90efc4043bde9e05d9cbec26a&locale=en-AU",
-    "http://www.vrbo.com/icalendar/9cd7a512422c4e40b041bbc1ec8d1e96.ics?nonTentative",
-    "https://ical.booking.com/v1/export?t=75ccae3a-6fcc-4ff6-a1fc-a3cb216c2ec0",
   ],
 };
 

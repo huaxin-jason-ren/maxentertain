@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { propertyConfig } from '@/config/property'
+import { getSiteUrl } from '@/lib/site'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -15,6 +16,7 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: `${propertyConfig.name} - Luxury Property Rental`,
   description: propertyConfig.description,
   keywords: 'luxury rental, vacation rental, property rental, luxury accommodation',
@@ -23,11 +25,14 @@ export const metadata: Metadata = {
     title: `${propertyConfig.name} - Luxury Property Rental`,
     description: propertyConfig.description,
     type: 'website',
+    url: '/',
+    images: [{ url: '/opengraph-image' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: `${propertyConfig.name} - Luxury Property Rental`,
     description: propertyConfig.description,
+    images: ['/twitter-image'],
   },
 }
 

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import ICAL from 'ical.js'
-import { propertyConfig } from '@/config/property'
 import { fromZonedTime, toZonedTime, formatInTimeZone } from 'date-fns-tz'
 
 // Helper function to parse a single iCal feed
@@ -78,22 +77,46 @@ async function parseICalFeed(icalUrl: string, australianTimezone: string): Promi
 
 export async function GET() {
   try {
-    // Get iCal URLs from config or environment variable
-    // Support both single URL (backward compatibility) and multiple URLs
-    let icalUrls: string[] = []
-    
-    if (propertyConfig.icalUrls && propertyConfig.icalUrls.length > 0) {
-      icalUrls = propertyConfig.icalUrls
-    } else if (process.env.NEXT_PUBLIC_ICAL_URL) {
-      icalUrls = [process.env.NEXT_PUBLIC_ICAL_URL]
-    } else if (process.env.NEXT_PUBLIC_ICAL_URLS) {
-      // Support comma-separated URLs in environment variable
-      icalUrls = process.env.NEXT_PUBLIC_ICAL_URLS.split(',').map(url => url.trim())
+    // IMPORTANT: iCal feed URLs are secrets (tokens). Do NOT store them in any client-shipped config
+    // and never return them in API responses.
+    //
+    // Configure on Vercel as server-side env vars:
+    // - ICAL_URLS (comma-separated), OR
+    // - AIRBNB_ICAL_URL / VRBO_ICAL_URL / BOOKING_ICAL_URL (any subset)
+    const sources: Array<{ source: string; url: string }> = []
+
+    const csv = process.env.ICAL_URLS
+    if (csv) {
+      csv
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .forEach((url, idx) => sources.push({ source: `ical_${idx + 1}`, url }))
     }
 
-    if (icalUrls.length === 0) {
+    const airbnb = process.env.AIRBNB_ICAL_URL
+    if (airbnb) sources.push({ source: 'airbnb', url: airbnb })
+
+    const vrbo = process.env.VRBO_ICAL_URL
+    if (vrbo) sources.push({ source: 'vrbo', url: vrbo })
+
+    const booking = process.env.BOOKING_ICAL_URL
+    if (booking) sources.push({ source: 'booking', url: booking })
+
+    // De-dupe URLs (in case csv + named overlap)
+    const seen = new Set<string>()
+    const icalFeeds = sources.filter(({ url }) => {
+      if (seen.has(url)) return false
+      seen.add(url)
+      return true
+    })
+
+    if (icalFeeds.length === 0) {
       return NextResponse.json(
-        { error: 'No iCal URLs configured' },
+        {
+          error: 'No iCal URLs configured',
+          hint: 'Set ICAL_URLS (comma-separated) or AIRBNB_ICAL_URL / VRBO_ICAL_URL / BOOKING_ICAL_URL in Vercel env vars.',
+        },
         { status: 400 }
       )
     }
@@ -103,21 +126,21 @@ export async function GET() {
 
     // Fetch and parse all iCal feeds in parallel
     const feedResults = await Promise.all(
-      icalUrls.map(url => parseICalFeed(url, australianTimezone))
+      icalFeeds.map((feed) => parseICalFeed(feed.url, australianTimezone))
     )
 
     // Merge all blocked dates from all feeds
     const allBlockedDates = new Set<string>()
     let totalEventCount = 0
-    const feedStatus: { url: string; success: boolean; eventCount: number }[] = []
+    const feedStatus: { source: string; success: boolean; eventCount: number }[] = []
 
     feedResults.forEach((result, index) => {
       result.blockedDates.forEach(date => allBlockedDates.add(date))
       totalEventCount += result.eventCount
       feedStatus.push({
-        url: icalUrls[index],
+        source: icalFeeds[index]?.source ?? `ical_${index + 1}`,
         success: result.eventCount > 0 || result.blockedDates.length > 0,
-        eventCount: result.eventCount
+        eventCount: result.eventCount,
       })
     })
 
@@ -128,8 +151,8 @@ export async function GET() {
       blockedDates,
       lastUpdated: new Date().toISOString(),
       eventCount: totalEventCount,
-      feedCount: icalUrls.length,
-      feedStatus, // Include status of each feed for debugging
+      feedCount: icalFeeds.length,
+      feedStatus, // Safe debugging info (no URLs/tokens)
     })
   } catch (error) {
     console.error('Error fetching iCal feeds:', error)

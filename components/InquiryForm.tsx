@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, FormEvent, useEffect } from 'react'
+import { useMemo, useState, FormEvent, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import emailjs from '@emailjs/browser'
 import { propertyConfig } from '@/config/property'
 import { emailJsConfig } from '@/config/emailjs'
+import { useAvailability } from '@/hooks/useAvailability'
+import DatePicker from '@/components/DatePicker'
 
 // Note: this component runs client-side. We init EmailJS in an effect to match
 // @emailjs/browser v4 API and to ensure it only runs in the browser.
@@ -25,10 +27,18 @@ type InquiryFormVariant = 'default' | 'glass'
 export default function InquiryForm({
   variant = 'default',
   containerClassName,
+  blockedDates: blockedDatesProp,
+  prefill,
 }: {
   variant?: InquiryFormVariant
   containerClassName?: string
+  blockedDates?: string[]
+  prefill?: { checkIn?: string; checkOut?: string }
 }) {
+  const availability = useAvailability({ enabled: blockedDatesProp === undefined })
+  const blockedDates = blockedDatesProp ?? availability.blockedDates
+  const blockedSet = useMemo(() => new Set(blockedDates), [blockedDates])
+
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -46,6 +56,45 @@ export default function InquiryForm({
   useEffect(() => {
     if (emailJsConfig.publicKey) emailjs.init({ publicKey: emailJsConfig.publicKey })
   }, [])
+
+  useEffect(() => {
+    if (!prefill) return
+    setFormData((prev) => ({
+      ...prev,
+      checkIn: prefill.checkIn ?? prev.checkIn,
+      checkOut: prefill.checkOut ?? prev.checkOut,
+    }))
+  }, [prefill?.checkIn, prefill?.checkOut])
+
+  const dateStrToUtcDate = (dateStr: string) => {
+    // dateStr: yyyy-MM-dd
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1))
+  }
+
+  const utcDateToDateStr = (date: Date) => {
+    const y = date.getUTCFullYear()
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+    const d = String(date.getUTCDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  const nightsBetween = (checkIn: string, checkOut: string) => {
+    const a = dateStrToUtcDate(checkIn).getTime()
+    const b = dateStrToUtcDate(checkOut).getTime()
+    return Math.round((b - a) / 86400000)
+  }
+
+  const isRangeAvailable = (checkIn: string, checkOut: string) => {
+    // Treat checkout as exclusive. Validate all nights from check-in up to (check-out - 1).
+    const start = dateStrToUtcDate(checkIn)
+    const endExclusive = dateStrToUtcDate(checkOut)
+    for (let cur = new Date(start); cur < endExclusive; cur.setUTCDate(cur.getUTCDate() + 1)) {
+      const curStr = utcDateToDateStr(cur)
+      if (blockedSet.has(curStr)) return false
+    }
+    return true
+  }
 
   const formatPhoneNumber = (value: string): string => {
     // Remove all non-digit characters except +
@@ -122,6 +171,15 @@ export default function InquiryForm({
     }
     if (formData.checkIn && formData.checkOut && new Date(formData.checkIn) >= new Date(formData.checkOut)) {
       newErrors.checkOut = 'Check-out must be after check-in'
+    }
+
+    if (formData.checkIn && formData.checkOut && !newErrors.checkOut) {
+      const nights = nightsBetween(formData.checkIn, formData.checkOut)
+      if (nights < 2) {
+        newErrors.checkOut = 'Minimum stay is 2 nights'
+      } else if (blockedDates.length > 0 && !isRangeAvailable(formData.checkIn, formData.checkOut)) {
+        newErrors.checkIn = 'Selected dates include unavailable nights. Please choose available dates.'
+      }
     }
     if (!formData.guests) {
       newErrors.guests = 'Number of guests is required'
@@ -208,6 +266,29 @@ export default function InquiryForm({
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
   }
+
+  const handleCheckInChange = (next: string) => {
+    setFormData((prev) => {
+      const shouldClearCheckOut = prev.checkOut && next && prev.checkOut <= next
+      return {
+        ...prev,
+        checkIn: next,
+        checkOut: shouldClearCheckOut ? '' : prev.checkOut,
+      }
+    })
+    if (errors.checkIn || errors.checkOut) {
+      setErrors((prev) => ({ ...prev, checkIn: undefined, checkOut: undefined }))
+    }
+  }
+
+  const handleCheckOutChange = (next: string) => {
+    setFormData((prev) => ({ ...prev, checkOut: next }))
+    if (errors.checkOut || errors.checkIn) {
+      setErrors((prev) => ({ ...prev, checkIn: undefined, checkOut: undefined }))
+    }
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0]
 
   const isGlass = variant === 'glass'
   const containerClasses = containerClassName ?? 'max-w-2xl mx-auto'
@@ -315,43 +396,36 @@ export default function InquiryForm({
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="checkIn" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Check-in Date *
-                    </label>
-                    <input
-                      type="date"
+                    <DatePicker
                       id="checkIn"
+                      label="Check-in Date"
                       value={formData.checkIn}
-                      onChange={(e) => handleChange('checkIn', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        errors.checkIn ? 'border-red-500' : 'border-gray-300'
-                      } focus:outline-none focus:ring-2 focus:ring-luxury-gold transition-all bg-white/85`}
+                      onChange={handleCheckInChange}
+                      blockedSet={blockedSet}
+                      minDateStr={todayStr}
+                      error={errors.checkIn}
+                      disabled={availability.isLoading}
                     />
-                    {errors.checkIn && (
-                      <p className="text-red-500 text-sm mt-1">{errors.checkIn}</p>
-                    )}
                   </div>
 
                   <div>
-                    <label htmlFor="checkOut" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Check-out Date *
-                    </label>
-                    <input
-                      type="date"
+                    <DatePicker
                       id="checkOut"
+                      label="Check-out Date"
                       value={formData.checkOut}
-                      onChange={(e) => handleChange('checkOut', e.target.value)}
-                      min={formData.checkIn || new Date().toISOString().split('T')[0]}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        errors.checkOut ? 'border-red-500' : 'border-gray-300'
-                      } focus:outline-none focus:ring-2 focus:ring-luxury-gold transition-all bg-white/85`}
+                      onChange={handleCheckOutChange}
+                      blockedSet={blockedSet}
+                      minDateStr={formData.checkIn || todayStr}
+                      minExclusive={Boolean(formData.checkIn)}
+                      error={errors.checkOut}
+                      disabled={availability.isLoading || !formData.checkIn}
                     />
-                    {errors.checkOut && (
-                      <p className="text-red-500 text-sm mt-1">{errors.checkOut}</p>
-                    )}
                   </div>
                 </div>
+
+                <p className="text-xs text-gray-500">
+                  Dates are validated against live availability. Unavailable dates are disabled.
+                </p>
 
                 <div>
                   <label htmlFor="guests" className="block text-sm font-semibold text-gray-700 mb-2">
