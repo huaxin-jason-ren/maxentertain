@@ -6,26 +6,64 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 
 export default function PhotosGallery() {
-  const images = useMemo(() => {
-    const thumbs =
-      propertyConfig.imagesCompressed && propertyConfig.imagesCompressed.length > 0
-        ? propertyConfig.imagesCompressed
-        : propertyConfig.images
-    return thumbs.length > 0 ? thumbs : propertyConfig.images
+  const sections = useMemo(() => {
+    const defined = propertyConfig.photoSections
+    if (defined && defined.length > 0) return defined
+    return [{ id: 'all', title: 'All Photos', images: propertyConfig.images }]
   }, [])
 
-  const hdImages = useMemo(() => {
-    return propertyConfig.images.length > 0 ? propertyConfig.images : images
-  }, [images])
+  const compressedSet = useMemo(() => new Set(propertyConfig.imagesCompressed ?? []), [])
+
+  const toThumb = (src: string) => {
+    if (!propertyConfig.imagesCompressed || propertyConfig.imagesCompressed.length === 0) return src
+    const candidate = src.replace('/images/', '/images/compressed/')
+    return compressedSet.has(candidate) ? candidate : src
+  }
+
+  const flat = useMemo(() => {
+    const photos: Array<{
+      sectionId: string
+      sectionTitle: string
+      hdSrc: string
+      thumbSrc: string
+    }> = []
+
+    const seen = new Set<string>()
+    for (const section of sections) {
+      for (const hdSrc of section.images) {
+        if (!hdSrc || seen.has(hdSrc)) continue
+        seen.add(hdSrc)
+        photos.push({
+          sectionId: section.id,
+          sectionTitle: section.title,
+          hdSrc,
+          thumbSrc: toThumb(hdSrc),
+        })
+      }
+    }
+
+    for (const hdSrc of propertyConfig.images) {
+      if (!hdSrc || seen.has(hdSrc)) continue
+      seen.add(hdSrc)
+      photos.push({
+        sectionId: 'other',
+        sectionTitle: 'Other',
+        hdSrc,
+        thumbSrc: toThumb(hdSrc),
+      })
+    }
+
+    return photos
+  }, [sections])
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
-  const totalImages = images.length
+  const totalImages = flat.length
 
   const close = () => setActiveIndex(null)
   const prev = () =>
-    setActiveIndex((i) => (i === null ? null : (i - 1 + hdImages.length) % hdImages.length))
-  const next = () => setActiveIndex((i) => (i === null ? null : (i + 1) % hdImages.length))
+    setActiveIndex((i) => (i === null ? null : (i - 1 + totalImages) % totalImages))
+  const next = () => setActiveIndex((i) => (i === null ? null : (i + 1) % totalImages))
 
   useEffect(() => {
     const update = () => setIsDesktop(window.matchMedia('(min-width: 768px)').matches)
@@ -50,68 +88,105 @@ export default function PhotosGallery() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex, hdImages.length, isDesktop])
+  }, [activeIndex, totalImages, isDesktop])
 
   return (
     <>
-      {/* Mobile: show ALL photos (2 per row) */}
-      <div className="md:hidden grid grid-cols-2 gap-3">
-        {images.map((src, idx) => (
-          <div key={idx} className="relative aspect-[4/3] w-full rounded-xl overflow-hidden">
-            <Image
-              src={src}
-              alt={`${propertyConfig.name} - Photo ${idx + 1}`}
-              fill
-              className="object-cover"
-              sizes="50vw"
-              loading="lazy"
-              quality={70}
-              unoptimized={false}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = hdImages[idx] || '/images/placeholder.jpg'
-              }}
-            />
-          </div>
-        ))}
+      {/* Jump nav */}
+      <div className="mb-8">
+        <div className="text-sm font-semibold text-gray-700 mb-3">Jump to section</div>
+        <div className="flex flex-wrap gap-2">
+          {sections.map((s) => (
+            <a
+              key={s.id}
+              href={`#section-${s.id}`}
+              className="px-3 py-2 rounded-full border text-sm text-gray-700 hover:text-luxury-gold hover:border-luxury-gold transition-colors"
+            >
+              {s.title}
+            </a>
+          ))}
+        </div>
       </div>
 
-      {/* Desktop/tablet: grid (with click-to-enlarge on desktop) */}
-      <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-        {images.map((src, idx) => (
-          <div
-            key={idx}
-            className={`relative aspect-[4/3] rounded-xl overflow-hidden ${
-              isDesktop ? 'cursor-pointer focus-within:ring-2 focus-within:ring-luxury-gold' : ''
-            }`}
-            {...(isDesktop
-              ? {
-                  role: 'button' as const,
-                  tabIndex: 0,
-                  onClick: () => setActiveIndex(idx),
-                  onKeyDown: (e: ReactKeyboardEvent) => {
-                    if (e.key === 'Enter' || e.key === ' ') setActiveIndex(idx)
-                  },
-                  'aria-label': `Open photo ${idx + 1}`,
-                }
-              : {})}
-          >
-            <Image
-              src={src}
-              alt={`${propertyConfig.name} - Photo ${idx + 1}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1200px) 33vw, 25vw"
-              loading="lazy"
-              quality={70}
-              unoptimized={false}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = hdImages[idx] || '/images/placeholder.jpg'
-              }}
-            />
-          </div>
-        ))}
+      {/* Sectioned gallery */}
+      <div className="space-y-10">
+        {sections.map((section) => {
+          const items = flat.filter((p) => p.sectionId === section.id)
+          if (items.length === 0) return null
+
+          return (
+            <section key={section.id} id={`section-${section.id}`}>
+              <h2 className="text-2xl md:text-3xl font-serif font-bold text-luxury-dark mb-4">
+                {section.title}
+              </h2>
+
+              {/* Mobile: 2 per row */}
+              <div className="md:hidden grid grid-cols-2 gap-3">
+                {items.map((p) => (
+                  <div key={p.hdSrc} className="relative aspect-[4/3] w-full rounded-xl overflow-hidden">
+                    <Image
+                      src={p.thumbSrc}
+                      alt={`${propertyConfig.name} - ${section.title}`}
+                      fill
+                      className="object-cover"
+                      sizes="50vw"
+                      loading="lazy"
+                      quality={70}
+                      unoptimized={false}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = p.hdSrc || '/images/placeholder.jpg'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop/tablet */}
+              <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                {items.map((p) => {
+                  const globalIndex = flat.findIndex((x) => x.hdSrc === p.hdSrc)
+                  const idx = globalIndex >= 0 ? globalIndex : 0
+
+                  return (
+                    <div
+                      key={p.hdSrc}
+                      className={`relative aspect-[4/3] rounded-xl overflow-hidden ${
+                        isDesktop ? 'cursor-pointer focus-within:ring-2 focus-within:ring-luxury-gold' : ''
+                      }`}
+                      {...(isDesktop
+                        ? {
+                            role: 'button' as const,
+                            tabIndex: 0,
+                            onClick: () => setActiveIndex(idx),
+                            onKeyDown: (e: ReactKeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') setActiveIndex(idx)
+                            },
+                            'aria-label': `Open photo ${idx + 1} (${section.title})`,
+                          }
+                        : {})}
+                    >
+                      <Image
+                        src={p.thumbSrc}
+                        alt={`${propertyConfig.name} - ${section.title}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1200px) 33vw, 25vw"
+                        loading="lazy"
+                        quality={70}
+                        unoptimized={false}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = p.hdSrc || '/images/placeholder.jpg'
+                        }}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )
+        })}
       </div>
 
       {isDesktop && activeIndex !== null && (
@@ -140,7 +215,7 @@ export default function PhotosGallery() {
 
           <div className="relative w-[92vw] max-w-5xl h-[70vh] md:h-[80vh]">
             <Image
-              src={hdImages[activeIndex] || images[activeIndex]}
+              src={flat[activeIndex]?.hdSrc || flat[activeIndex]?.thumbSrc || '/images/placeholder.jpg'}
               alt={`${propertyConfig.name} - Photo ${activeIndex + 1}`}
               fill
               className="object-contain"

@@ -5,6 +5,35 @@ import { Star, Quote } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 import AwardBanner from '@/components/AwardBanner'
 
+function escapeRegExp(input: string) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function renderHighlightedText(text: string, keywords?: string[]) {
+  const cleaned = (keywords ?? [])
+    .map((k) => k.trim())
+    .filter(Boolean)
+
+  if (cleaned.length === 0) return text
+
+  // Longer keywords first to avoid partial matches pre-empting longer phrases.
+  const sorted = [...cleaned].sort((a, b) => b.length - a.length)
+  const pattern = sorted.map(escapeRegExp).join('|')
+  const re = new RegExp(`(${pattern})`, 'gi')
+
+  const parts = text.split(re)
+  return parts.map((part, i) => {
+    const isHit = sorted.some((k) => k.toLowerCase() === part.toLowerCase())
+    return isHit ? (
+      <span key={i} className="font-semibold text-gray-900 not-italic">
+        {part}
+      </span>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  })
+}
+
 export default function Testimonials() {
   return (
     <section id="testimonials" className="section-padding bg-white">
@@ -48,7 +77,7 @@ export default function Testimonials() {
                 ))}
               </div>
               <p className="text-gray-700 mb-6 leading-relaxed italic">
-                &ldquo;{testimonial.comment}&rdquo;
+                &ldquo;{renderHighlightedText(testimonial.comment, testimonial.highlight)}&rdquo;
               </p>
               <div className="border-t pt-4">
                 <p className="font-semibold text-luxury-dark">{testimonial.name}</p>

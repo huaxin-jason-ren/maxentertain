@@ -15,10 +15,18 @@ export interface PropertyConfig {
   };
   images: string[];
   imagesCompressed?: string[]; // Compressed versions for faster loading
+  photoSections?: Array<{
+    id: string;
+    title: string;
+    images: string[]; // Use original (non-compressed) `/images/...` paths
+  }>;
   testimonials: {
     name: string;
     rating: number;
     comment: string;
+    highlight?: string[];
+    source?: 'airbnb' | 'booking' | 'vrbo';
+    sourceUrl?: string;
     date: string;
   }[];
   localArea: {
@@ -191,7 +199,8 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
   policies: {
     checkIn: "3:00 PM",
     checkOut: "10:00 AM",
-    cancellation: "Add your trip dates to get the cancellation details for this stay",
+    cancellation:
+      "More than 14 days before check-in: full refund. 7–14 days before check-in: 50% refund. Less than 7 days before check-in: no refund.",
     houseRules: [
       "STRICTLY NO PARTIES - Mornington Peninsula Shire Council Short Stay Accommodation Code of Conduct rules apply",
       "Outdoor areas including swimming pools, spas, outdoor decking and balconies are not to be used between 11:00 PM to 7:00 AM",
@@ -209,6 +218,7 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
     "/images/_DSC8015-2.jpg",
     "/images/_DSC8072.jpg",
     "/images/_DSC8107.jpg",
+    "/images/_DSC8041.jpg",
     "/images/_DSC7896.jpg",
     "/images/_DSC7916.jpg",
     "/images/_DSC7940.jpg",
@@ -274,36 +284,221 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
     "/images/compressed/IMG_0126.jpeg",
     "/images/compressed/IMG_4224.JPG",
   ],
+  photoSections: [
+    {
+      id: "exterior",
+      title: "Exterior",
+      images: ["/images/_DSC8107.jpg"],
+    },
+    {
+      id: "backyard",
+      title: "Backyard and Pool",
+      images: [
+        "/images/_DSC8072.jpg",
+        "/images/_DSC8056-2.jpg",
+        "/images/_DSC7993-2.jpg",
+        "/images/_DSC7989-2.jpg",
+        "/images/_DSC8015-2.jpg",
+        "/images/_DSC8052-2.jpg",
+        "/images/_DSC8041.jpg",
+        "/images/IMG_4404.jpg",
+        "/images/IMG_4417.jpg",
+        "/images/IMG_0126.jpeg",
+      ],
+    },
+    {
+      id: "living",
+      title: "Living, Dining and Kitchen",
+      images: [
+        "/images/_DSC7814.jpg",
+        "/images/_DSC7790.jpg",
+        "/images/_DSC7833.jpg",
+        "/images/_DSC7824.jpg",
+        "/images/_DSC7940.jpg",
+        "/images/_DSC7799.jpg",
+        "/images/_DSC7809.jpg",
+      ],
+    },
+    {
+      id: "bedrooms",
+      title: "Bedrooms",
+      images: [
+        "/images/_DSC7668.jpg",
+        "/images/_DSC7712.jpg",
+        "/images/_DSC7732.jpg",
+        "/images/_DSC7747.jpg",
+        "/images/_DSC7783.jpg",
+        "/images/_DSC7772.jpg",
+      ],
+    },
+    {
+      id: "bathrooms",
+      title: "Bathrooms",
+      images: [
+        "/images/_DSC7658.jpg",
+        "/images/_DSC7718.jpg",
+        "/images/_DSC7759.jpg",
+        "/images/_DSC7916.jpg",
+      ],
+    },
+    {
+      id: "laundry",
+      title: "Laundry",
+      images: ["/images/_DSC7912.jpg"],
+    },
+    {
+      id: "entertainment",
+      title: "Games and Theatre",
+      images: [
+        "/images/_DSC7896.jpg",
+        "/images/_DSC7858.jpg",
+        "/images/IMG_4224.JPG",
+        "/images/IMG_4449.jpg",
+      ],
+    },
+    {
+      id: "views",
+      title: "Nearby and Views",
+      images: ["/images/IMG_4183.JPG"],
+    },
+    {
+      id: "extras",
+      title: "Extras",
+      images: ["/images/IMG_0275.jpeg"],
+    },
+  ],
   testimonials: [
     {
       name: "Stephen",
       rating: 5,
       comment: "Great house for a group of golfers. Nice big screen TV, great kitchen & BBQ area out on the deck. Some of the guys enjoyed the cinema room also. House accommodated our needs perfectly & Jason the host super responsive which made booking & planning nice & easy.",
+      highlight: ["big screen TV", "BBQ", "cinema room", "super responsive"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387",
       date: "November 2025",
     },
     {
       name: "Julia",
       rating: 5,
       comment: "We had the best weekend staying here. The house was a lot of fun and we hardly left as everything was there. It really is a great set up and Jason was the perfect host.",
+      highlight: ["best weekend", "lot of fun", "everything was there", "perfect host"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387",
       date: "October 2025",
     },
     {
       name: "Sam",
       rating: 5,
       comment: "We all had an exceptional stay. The house catered to all ages and interests, which came into its own when one of the days was very rainy.",
+      highlight: ["exceptional", "all ages", "very rainy"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387",
       date: "November 2025",
     },
     {
       name: "Lisa",
       rating: 5,
       comment: "Our stay at Jason's air bnb was absolutely fantastic for our large family. It was the perfect place to celebrate our daughter's 40th birthday and granddaughter's birthday with all our family. Thankyou very much Jason.",
+      highlight: ["absolutely fantastic", "large family", "perfect place", "40th birthday"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387",
       date: "October 2025",
     },
     {
       name: "Andy",
       rating: 5,
       comment: "Amazing house, very clean and you will not run out of things to do! Thank you Jason",
+      highlight: ["very clean", "not run out of things to do"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387",
       date: "October 2025",
+    },
+    {
+      name: "Mohammad",
+      rating: 5,
+      comment:
+        "Excellent house with 100% matching with pictures and descriptions. For a large family with children, it's an exceptional find. The host is very helpful and quick to respond. We thoroughly enjoyed our stay.",
+      highlight: ["100% matching", "exceptional", "quick to respond", "large family"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "1 day ago",
+    },
+    {
+      name: "Jayne",
+      rating: 5,
+      comment:
+        "Amazing House, it had everything for the kids, very clean, we had a great time would highly recommend it, one of the best houses we have stayed in",
+      highlight: ["everything for the kids", "very clean", "highly recommend", "best houses"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "4 days ago",
+    },
+    {
+      name: "Osama",
+      rating: 5,
+      comment:
+        "The house is more than amazing for all ages and so elegant. Jason is a great host always reachable and more than a nice person really appreciate what he did for us during our stay. We recommend this house and this host sooo much.",
+      highlight: ["amazing", "all ages", "great host", "always reachable"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "1 week ago",
+    },
+    {
+      name: "Sara",
+      rating: 5,
+      comment:
+        "This was our second time staying at Jason’s! Such a great location and the house is full of activities for kids and adults of all ages! Also one of the cleanest AirBnb’s we’ve ever stayed at.",
+      highlight: ["second time", "great location", "full of activities", "cleanest"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "1 week ago",
+    },
+    {
+      name: "Julio",
+      rating: 5,
+      comment: "Awesome house and host - 10/10",
+      highlight: ["Awesome", "host", "10/10"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "2 weeks ago",
+    },
+    {
+      name: "Madison",
+      rating: 5,
+      comment:
+        "We were so happy with our stay! Jason was a great host and always responded promptly to any questions we had. The house was perfect in every way, spotlessly clean and filled with so many great amenities. Thank you again for a wonderful stay!",
+      highlight: ["responded promptly", "spotlessly clean", "great amenities", "wonderful stay"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "2 weeks ago",
+    },
+    {
+      name: "Karen",
+      rating: 5,
+      comment: "Property had everything we needed for our family getaway.",
+      highlight: ["everything we needed", "family getaway"],
+      source: "booking",
+      sourceUrl: "https://www.booking.com/hotel/au/amazing-backyard-max-entertain-beachside-retreat.en-gb.html",
+      date: "Booking.com guest review",
+    },
+    {
+      name: "Piper",
+      rating: 5,
+      comment: "The facilities were fantastic and made it a great holiday with friends.",
+      highlight: ["facilities", "fantastic", "holiday with friends"],
+      source: "booking",
+      sourceUrl: "https://www.booking.com/hotel/au/amazing-backyard-max-entertain-beachside-retreat.en-gb.html",
+      date: "Booking.com guest review",
+    },
+    {
+      name: "Pascale",
+      rating: 5,
+      comment:
+        "Everything was perfect! We came in the middle of winter so weren’t able to use the epic pool but there are so many other activities to do. The kids had a great time and didn’t want to leave!",
+      highlight: ["Everything was perfect", "epic pool", "other activities", "didn’t want to leave"],
+      source: "booking",
+      sourceUrl: "https://www.booking.com/hotel/au/amazing-backyard-max-entertain-beachside-retreat.en-gb.html",
+      date: "Booking.com guest review",
     },
   ],
   localArea: {
