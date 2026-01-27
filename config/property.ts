@@ -46,6 +46,14 @@ export interface PropertyConfig {
       end: string;
       rate: number;
     }[];
+    fees?: {
+      cleaning?: number;
+      taxesRate?: number; // e.g. 0.1 for 10%
+    };
+    platformAdjustments?: Partial<Record<'airbnb' | 'booking' | 'vrbo', {
+      multiplier?: number; // e.g. 1.05 if a platform typically costs ~5% more
+      extraFee?: number; // fixed extra fee added on top of total
+    }>>;
   };
   contact: {
     email: string;
