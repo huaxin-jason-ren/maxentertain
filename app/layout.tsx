@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { propertyConfig } from '@/config/property'
 import { getSiteUrl } from '@/lib/site'
@@ -46,6 +47,19 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/images/brand/logo.png" type="image/png" />
         <link rel="icon" href="/favicon.ico" />
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-17899499107"
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-17899499107');
+          `}
+        </Script>
       </head>
       <body className="font-sans antialiased">
         {children}

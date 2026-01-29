@@ -53,6 +53,16 @@ export default function InquiryForm({
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>('')
   const [errors, setErrors] = useState<Partial<FormData>>({})
 
+  const trackGoogleAdsLeadConversion = () => {
+    if (typeof window === 'undefined') return
+    const gtag = (window as any).gtag as undefined | ((...args: any[]) => void)
+    if (typeof gtag !== 'function') return
+
+    gtag('event', 'conversion', {
+      send_to: 'AW-17899499107/sDFcCJKR7e4bEOPcktdC',
+    })
+  }
+
   useEffect(() => {
     if (emailJsConfig.publicKey) emailjs.init({ publicKey: emailJsConfig.publicKey })
   }, [])
@@ -226,6 +236,9 @@ export default function InquiryForm({
 
       // @emailjs/browser v4: pass publicKey in options (even if init ran)
       await emailjs.send(serviceId, templateId, templateParams, { publicKey })
+
+      // Google Ads conversion: fire only after successful submit.
+      trackGoogleAdsLeadConversion()
 
       setSubmitStatus('success')
       setFormData({
