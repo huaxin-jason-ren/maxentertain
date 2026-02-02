@@ -35,11 +35,6 @@ export default function Footer() {
                   Book Your Stay
                 </Link>
               </li>
-              <li>
-                <a href={`mailto:${propertyConfig.contact.email}`} className="text-gray-300 hover:text-luxury-gold transition-colors">
-                  Contact Us
-                </a>
-              </li>
             </ul>
           </div>
 
