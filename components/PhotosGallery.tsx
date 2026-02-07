@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
@@ -63,11 +63,40 @@ export default function PhotosGallery() {
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const totalImages = flat.length
+  const touchStartXRef = useRef<number | null>(null)
+  const touchStartYRef = useRef<number | null>(null)
+  const lockedScrollYRef = useRef<number>(0)
 
   const close = () => setActiveIndex(null)
   const prev = () =>
     setActiveIndex((i) => (i === null ? null : (i - 1 + totalImages) % totalImages))
   const next = () => setActiveIndex((i) => (i === null ? null : (i + 1) % totalImages))
+
+  // Lock page scrolling when lightbox is open (iOS-safe).
+  useEffect(() => {
+    if (activeIndex === null) return
+
+    const body = document.body
+    lockedScrollYRef.current = window.scrollY
+
+    const prevOverflow = body.style.overflow
+    const prevPosition = body.style.position
+    const prevTop = body.style.top
+    const prevWidth = body.style.width
+
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${lockedScrollYRef.current}px`
+    body.style.width = '100%'
+
+    return () => {
+      body.style.overflow = prevOverflow
+      body.style.position = prevPosition
+      body.style.top = prevTop
+      body.style.width = prevWidth
+      window.scrollTo(0, lockedScrollYRef.current)
+    }
+  }, [activeIndex])
 
   useEffect(() => {
     if (activeIndex === null) return
@@ -207,11 +236,34 @@ export default function PhotosGallery() {
           className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
           role="dialog"
           aria-modal="true"
+          onClick={close}
+          onTouchStart={(e) => {
+            const t = e.touches[0]
+            touchStartXRef.current = t?.clientX ?? null
+            touchStartYRef.current = t?.clientY ?? null
+          }}
+          onTouchEnd={(e) => {
+            const startX = touchStartXRef.current
+            const startY = touchStartYRef.current
+            touchStartXRef.current = null
+            touchStartYRef.current = null
+
+            const t = e.changedTouches[0]
+            if (startX === null || startY === null || !t) return
+
+            const dx = t.clientX - startX
+            const dy = t.clientY - startY
+
+            // Horizontal swipe (ignore if mostly vertical).
+            if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy)) return
+            if (dx > 0) prev()
+            else next()
+          }}
         >
           <button
             type="button"
             onClick={close}
-            className="absolute top-4 right-4 text-white/90 hover:text-white p-2"
+            className="absolute top-3 right-3 md:top-4 md:right-4 text-white/90 hover:text-white p-3 rounded-full bg-black/30 hover:bg-black/40 transition-colors"
             aria-label="Close"
           >
             <X size={28} />
@@ -220,13 +272,16 @@ export default function PhotosGallery() {
           <button
             type="button"
             onClick={prev}
-            className="absolute left-2 md:left-6 text-white/90 hover:text-white p-2"
+            className="hidden md:inline-flex absolute left-2 md:left-6 text-white/90 hover:text-white p-2 rounded-full bg-black/20 hover:bg-black/30 transition-colors"
             aria-label="Previous photo"
           >
             <ChevronLeft size={36} />
           </button>
 
-          <div className="relative w-[92vw] max-w-5xl h-[70vh] md:h-[80vh]">
+          <div
+            className="relative w-[92vw] max-w-5xl h-[72vh] md:h-[80vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Image
               src={safeSrc(
                 flat[activeIndex]?.hdSrc || flat[activeIndex]?.thumbSrc || PLACEHOLDER,
@@ -242,11 +297,43 @@ export default function PhotosGallery() {
           <button
             type="button"
             onClick={next}
-            className="absolute right-2 md:right-6 text-white/90 hover:text-white p-2"
+            className="hidden md:inline-flex absolute right-2 md:right-6 text-white/90 hover:text-white p-2 rounded-full bg-black/20 hover:bg-black/30 transition-colors"
             aria-label="Next photo"
           >
             <ChevronRight size={36} />
           </button>
+
+          {/* Mobile: simple pager + swipe hint (smooth + less clutter) */}
+          <div className="md:hidden absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+            <div className="text-xs text-white/75">Swipe left/right</div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  prev()
+                }}
+                className="px-4 py-2 rounded-full bg-white/10 text-white/90 border border-white/15"
+                aria-label="Previous photo"
+              >
+                Prev
+              </button>
+              <div className="text-xs text-white/75 tabular-nums">
+                {activeIndex + 1} / {totalImages}
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  next()
+                }}
+                className="px-4 py-2 rounded-full bg-white/10 text-white/90 border border-white/15"
+                aria-label="Next photo"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>
