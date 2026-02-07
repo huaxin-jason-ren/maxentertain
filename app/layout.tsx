@@ -42,10 +42,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const iconHref = encodeURI('/Airbnb picture/icons_files/Icon.png')
+
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <link rel="icon" href="/images/brand/logo.png" type="image/png" />
+        <link rel="icon" href={iconHref} type="image/png" />
         <link rel="icon" href="/favicon.ico" />
         <Script
           async

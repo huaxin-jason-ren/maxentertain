@@ -4,12 +4,14 @@ import { ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 
 export default function InquiryPage() {
+  const safeSrc = (src: string) => encodeURI(src)
+
   return (
     <main className="relative min-h-screen">
       {/* Fixed background */}
       <div className="fixed inset-0 -z-10">
         <Image
-          src="/images/hd/Backyard.jpg"
+          src={safeSrc('/Airbnb picture/1975 Point Nepean Road- HD/Backyard.jpg')}
           alt="Property background"
           fill
           priority

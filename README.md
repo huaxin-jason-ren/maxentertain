@@ -43,7 +43,7 @@ Edit `config/property.ts` to update:
 - Put images in `public/images/`
 - This project also supports:
   - `public/images/compressed/` for faster gallery thumbnails
-  - `public/images/hd/` for large hero/featured images
+  - `public/Airbnb picture/1975 Point Nepean Road- HD/` for the photo gallery (single source of truth)
 
 Update the image arrays in `config/property.ts` to match your filenames.
 

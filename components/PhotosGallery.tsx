@@ -6,7 +6,10 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 
 export default function PhotosGallery() {
-  const safeSrc = (src: string) => encodeURI(src)
+  const PLACEHOLDER =
+    'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"1200\" height=\"800\"%3E%3Crect fill=\"%23ddd\" width=\"1200\" height=\"800\"/%3E%3Ctext fill=\"%23999\" font-family=\"sans-serif\" font-size=\"24\" x=\"50%25\" y=\"50%25\" text-anchor=\"middle\" dy=\".3em\"%3EImage%20unavailable%3C/text%3E%3C/svg%3E'
+
+  const safeSrc = (src: string) => (src.startsWith('data:') ? src : encodeURI(src))
 
   const sections = useMemo(() => {
     const defined = propertyConfig.photoSections
@@ -59,7 +62,6 @@ export default function PhotosGallery() {
   }, [sections])
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const [isDesktop, setIsDesktop] = useState(false)
   const totalImages = flat.length
 
   const close = () => setActiveIndex(null)
@@ -68,19 +70,7 @@ export default function PhotosGallery() {
   const next = () => setActiveIndex((i) => (i === null ? null : (i + 1) % totalImages))
 
   useEffect(() => {
-    const update = () => setIsDesktop(window.matchMedia('(min-width: 768px)').matches)
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [])
-
-  useEffect(() => {
     if (activeIndex === null) return
-    if (!isDesktop) {
-      // Don’t show the full-screen “enlarge” viewer on mobile.
-      setActiveIndex(null)
-      return
-    }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close()
@@ -90,7 +80,7 @@ export default function PhotosGallery() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex, totalImages, isDesktop])
+  }, [activeIndex, totalImages])
 
   return (
     <>
@@ -123,16 +113,35 @@ export default function PhotosGallery() {
               className="scroll-mt-24 md:scroll-mt-28 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4 md:p-6"
             >
               <div className="flex items-baseline justify-between gap-4 mb-3 md:mb-4">
-                <h2 className="text-xl md:text-2xl font-serif font-bold text-luxury-dark">
-                  {section.title}
-                </h2>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-serif font-bold text-luxury-dark">
+                    {section.title}
+                  </h2>
+                  {'description' in section && section.description ? (
+                    <div className="mt-1 text-sm text-gray-600">{section.description}</div>
+                  ) : null}
+                </div>
                 <div className="text-xs text-gray-500">{items.length} photos</div>
               </div>
 
               {/* Mobile: 2 per row */}
               <div className="md:hidden grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {items.map((p) => (
-                  <div key={p.hdSrc} className="relative aspect-[4/3] w-full rounded-xl overflow-hidden">
+                {items.map((p) => {
+                  const globalIndex = flat.findIndex((x) => x.hdSrc === p.hdSrc)
+                  const idx = globalIndex >= 0 ? globalIndex : 0
+
+                  return (
+                  <div
+                    key={p.hdSrc}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setActiveIndex(idx)}
+                    onKeyDown={(e: ReactKeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') setActiveIndex(idx)
+                    }}
+                    aria-label={`Open photo ${idx + 1} (${section.title})`}
+                    className="relative aspect-[4/3] w-full rounded-xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold"
+                  >
                     <Image
                       src={safeSrc(p.thumbSrc)}
                       alt={`${propertyConfig.name} - ${section.title}`}
@@ -144,11 +153,12 @@ export default function PhotosGallery() {
                       unoptimized={false}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
-                        target.src = safeSrc(p.hdSrc || '/images/placeholder.jpg')
+                        target.src = safeSrc(p.hdSrc || PLACEHOLDER)
                       }}
                     />
                   </div>
-                ))}
+                  )
+                })}
               </div>
 
               {/* Desktop/tablet */}
@@ -160,20 +170,14 @@ export default function PhotosGallery() {
                   return (
                     <div
                       key={p.hdSrc}
-                      className={`relative aspect-[4/3] rounded-xl overflow-hidden ${
-                        isDesktop ? 'cursor-pointer focus-within:ring-2 focus-within:ring-luxury-gold' : ''
-                      }`}
-                      {...(isDesktop
-                        ? {
-                            role: 'button' as const,
-                            tabIndex: 0,
-                            onClick: () => setActiveIndex(idx),
-                            onKeyDown: (e: ReactKeyboardEvent) => {
-                              if (e.key === 'Enter' || e.key === ' ') setActiveIndex(idx)
-                            },
-                            'aria-label': `Open photo ${idx + 1} (${section.title})`,
-                          }
-                        : {})}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setActiveIndex(idx)}
+                      onKeyDown={(e: ReactKeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') setActiveIndex(idx)
+                      }}
+                      aria-label={`Open photo ${idx + 1} (${section.title})`}
+                      className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold"
                     >
                       <Image
                         src={safeSrc(p.thumbSrc)}
@@ -186,7 +190,7 @@ export default function PhotosGallery() {
                         unoptimized={false}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
-                          target.src = safeSrc(p.hdSrc || '/images/placeholder.jpg')
+                          target.src = safeSrc(p.hdSrc || PLACEHOLDER)
                         }}
                       />
                     </div>
@@ -198,7 +202,7 @@ export default function PhotosGallery() {
         })}
       </div>
 
-      {isDesktop && activeIndex !== null && (
+      {activeIndex !== null && (
         <div
           className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
           role="dialog"
@@ -225,7 +229,7 @@ export default function PhotosGallery() {
           <div className="relative w-[92vw] max-w-5xl h-[70vh] md:h-[80vh]">
             <Image
               src={safeSrc(
-                flat[activeIndex]?.hdSrc || flat[activeIndex]?.thumbSrc || '/images/placeholder.jpg',
+                flat[activeIndex]?.hdSrc || flat[activeIndex]?.thumbSrc || PLACEHOLDER,
               )}
               alt={`${propertyConfig.name} - Photo ${activeIndex + 1}`}
               fill

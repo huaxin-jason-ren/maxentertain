@@ -7,8 +7,12 @@ import { Calendar } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 
 export default function Hero() {
-  // Homepage hero image (renamed, stored under `/public/images/hd/*`).
-  const heroImage = '/images/hd/exterior2.jpg'
+  const safeSrc = (src: string) => (src.startsWith('data:') ? src : encodeURI(src))
+  const PLACEHOLDER =
+    'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"1200\" height=\"800\"%3E%3Crect fill=\"%23ddd\" width=\"1200\" height=\"800\"/%3E%3Ctext fill=\"%23999\" font-family=\"sans-serif\" font-size=\"24\" x=\"50%25\" y=\"50%25\" text-anchor=\"middle\" dy=\".3em\"%3EImage%20unavailable%3C/text%3E%3C/svg%3E'
+
+  // Homepage hero image (single source of truth: `public/Airbnb picture/...`).
+  const heroImage = safeSrc('/Airbnb picture/1975 Point Nepean Road- HD/exterior2.jpg')
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -34,7 +38,7 @@ export default function Hero() {
               onError={(e) => {
                 // Fallback to the first configured gallery image.
                 const target = e.target as HTMLImageElement
-                target.src = propertyConfig.images[0] || '/images/placeholder.jpg'
+                target.src = safeSrc(propertyConfig.images[0] || PLACEHOLDER)
               }}
             />
           </div>
@@ -71,7 +75,7 @@ export default function Hero() {
                     className="bg-[#FF5A5F] hover:bg-[#E04A4F] text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center gap-3 text-sm md:text-base"
                   >
                     <Image
-                      src="/images/icons/airbnb_icon.jpg"
+                      src={safeSrc('/Airbnb picture/icons_files/airbnb_icon.jpg')}
                       alt="Airbnb"
                       width={24}
                       height={24}
@@ -88,7 +92,7 @@ export default function Hero() {
                     className="bg-[#003580] hover:bg-[#002550] text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center gap-3 text-sm md:text-base"
                   >
                     <Image
-                      src="/images/icons/booking_icon.jpeg"
+                      src={safeSrc('/Airbnb picture/icons_files/booking_icon.jpeg')}
                       alt="Booking.com"
                       width={24}
                       height={24}
@@ -105,7 +109,7 @@ export default function Hero() {
                     className="bg-[#00A699] hover:bg-[#008B7F] text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center gap-3 text-sm md:text-base"
                   >
                     <Image
-                      src="/images/icons/vrbo.png"
+                      src={safeSrc('/Airbnb picture/icons_files/vrbo.png')}
                       alt="VRBO"
                       width={24}
                       height={24}

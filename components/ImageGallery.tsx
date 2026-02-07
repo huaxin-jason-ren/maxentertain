@@ -16,7 +16,10 @@ function moveImageToFront(images: string[], filename: string) {
 }
 
 export default function ImageGallery() {
-  const safeSrc = (src: string) => encodeURI(src)
+  const PLACEHOLDER =
+    'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"1200\" height=\"800\"%3E%3Crect fill=\"%23ddd\" width=\"1200\" height=\"800\"/%3E%3Ctext fill=\"%23999\" font-family=\"sans-serif\" font-size=\"24\" x=\"50%25\" y=\"50%25\" text-anchor=\"middle\" dy=\".3em\"%3EImage%20unavailable%3C/text%3E%3C/svg%3E'
+
+  const safeSrc = (src: string) => (src.startsWith('data:') ? src : encodeURI(src))
 
   // Lightbox removed: keep gallery as a simple, non-clickable grid
   // Use compressed images for gallery thumbnails (faster loading)
@@ -26,7 +29,7 @@ export default function ImageGallery() {
   // Use HD images for lightbox (full quality when viewing)
   const hdImages = propertyConfig.images.length > 0 
     ? propertyConfig.images 
-    : ['/images/placeholder.jpg']
+    : [PLACEHOLDER]
 
   // Mobile scrolling gallery: start with the first exterior photo.
   const PREFERRED_FIRST_FILENAME = 'exterior.jpg'
@@ -36,7 +39,7 @@ export default function ImageGallery() {
   
   // Get HD image for lightbox
   const getHdImage = (index: number) => {
-    return orderedHdImages[index] || images[index] || '/images/placeholder.jpg'
+    return orderedHdImages[index] || images[index] || PLACEHOLDER
   }
 
   // (lightbox handlers removed)
@@ -111,7 +114,7 @@ export default function ImageGallery() {
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         const hdFallback = getHdImage(index)
-                        target.src = safeSrc(hdFallback || '/images/placeholder.jpg')
+                        target.src = safeSrc(hdFallback || PLACEHOLDER)
                       }}
                     />
                   </Link>
@@ -145,7 +148,7 @@ export default function ImageGallery() {
                       // Fallback to HD version if compressed fails
                       const target = e.target as HTMLImageElement
                       const hdFallback = getHdImage(index)
-                      if (hdFallback && hdFallback !== '/images/placeholder.jpg') {
+                      if (hdFallback && hdFallback !== PLACEHOLDER) {
                         target.src = safeSrc(hdFallback)
                       } else {
                         target.src =

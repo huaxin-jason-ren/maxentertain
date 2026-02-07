@@ -10,6 +10,7 @@ import ShareButton from '@/components/ShareButton'
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const safeSrc = (src: string) => encodeURI(src)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,7 +49,7 @@ export default function Navigation() {
           >
             <span className="relative h-9 w-9 md:h-10 md:w-10 overflow-hidden rounded-full bg-white/90 ring-1 ring-black/5 flex-shrink-0">
               <Image
-                src="/images/brand/logo.png"
+                src={safeSrc('/Airbnb picture/icons_files/Icon.png')}
                 alt="Max Entertain logo"
                 fill
                 className="object-cover scale-110"
