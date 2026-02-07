@@ -34,8 +34,16 @@ export interface PropertyConfig {
     description: string;
     attractions: {
       name: string;
-      distance: string;
       type: 'restaurant' | 'attraction' | 'activity' | 'beach' | 'shopping';
+      // Legacy distance label (if you don't provide structured drive info)
+      distance?: string;
+      // Optional nearby photo (stored under `/public/images/...`)
+      image?: string;
+      // Optional computed driving distance + time
+      drive?: {
+        distanceKm: number;
+        durationMin: number;
+      };
     }[];
   };
   contact: {
@@ -387,6 +395,66 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
       date: "November 2025",
     },
     {
+      name: "Susan",
+      rating: 5,
+      comment:
+        "What a perfect place to spend Christmas 2025 with three generations. I don't think there could be an Airbnb in all of Australia that has more wonderful things to keep everyone entertained, no matter what age or gender. The pool had new blow-up floats, the home theatre/karaoke room had a very fun star ceiling, there was ping pong and a pool table and arcade games along with a trampoline (kids are zipped in, so no worry of falls) and a little mini golf course. The house was spotless with six luxurious bedrooms and baths, all within walking distance of a lovely cafe. In addition, the beach was just a quick walk across the street. Jason couldn't have been a more welcoming host. He was quick to respond leading up to our stay or when we had questions after arriving and he even arranged for the Woolies Santa to deliver a bag of special goodies on Christmas day! Lucky for us, it was the second time we've stayed at Jason's home this year and we can't wait for visit Number Three!",
+      highlight: ["Christmas 2025", "three generations", "home theatre", "karaoke", "mini golf"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "December 2025",
+    },
+    {
+      name: "Anne",
+      rating: 5,
+      comment:
+        "Our 3 days stay at Jason's place lived up to all the expectations we had. As a group of 8 adults and 6 children (aged between 7 and 12) celebrating a 70th birthday of a grandparent, we had plenty of room for everyone. Beautifully appointed ensuites were beside 5 of the bedrooms and the two girl grandchildren who shared with twin beds had a great powder room nearby. If you want the kids to have fun then this place doesn't disappoint. The kids roamed from the pool to the spa, to the games area to the fabulous theatre room then did it all again! Adults could really relax and enjoy the house. We managed an afternoon with the kayaks across the road at the beach and a game of cricket at the park around the corner (next street left towards Rye). And some of us loved the daily coffee break at 'the kitchen cafe' a five minute walk from the house turning right. Great ambiance. Thanks Jason for providing such a thoughtful entertainment house spotlessly maintained. We would love to return.",
+      highlight: ["8 adults", "6 children", "theatre room", "pool", "spa"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "December 2025",
+    },
+    {
+      name: "Nicole",
+      rating: 5,
+      comment:
+        "We stayed here as a family gathering for our mum/grandma's 80th birthday. The house had EVERYTHING we could need for a cruisy, fun, 'don't need to leave the house' kind of weekend! Bedrooms & bathrooms for everyone. Games for big kids and little kids. The cinema was a great escape. The outdoor spa was a perfect start to the morning or end to the evening. The car racing games provided much fun for the competitive spirits. The pool table and table tennis both downstairs also provided another space to have some quiet time or competitive banter! Beach across the road. Coffee shop walking distance. The sun on the front balcony, beautiful. Plenty of car parking. Safe and secure with electric gate. A fabulous house for a large group to hang out. Loved it.",
+      highlight: ["80th birthday", "don't need to leave the house", "cinema", "outdoor spa", "Beach across the road"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "August 2025",
+    },
+    {
+      name: "Bonnie",
+      rating: 5,
+      comment:
+        "We had the most incredible weekend at Jason's place, it exceeded all expectations! The home is beautifully presented, thoughtfully equipped, and instantly welcoming. The arcade games, theatre room, and karaoke setup made for the perfect winter escape, we barely needed to leave the house. Every little detail has been carefully considered, from the cozy furnishings to the fun-filled amenities. We loved the hot tub in the rain, waking up to sunrise over the beach, and soaking in the sunset views. The location was ideal for a relaxing winter break with friends, offering plenty of space and a great coastal vibe. Everything was spotless, the beds were super comfortable, and the outdoor area was perfect. Jason was a responsive and thoughtful host, and the check-in/out process was seamless thanks to his clear communication. We can't wait to come back. Highly recommend. 10/10!",
+      highlight: ["arcade games", "theatre room", "karaoke", "hot tub in the rain", "sunrise over the beach"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "July 2025",
+    },
+    {
+      name: "Susan",
+      rating: 5,
+      comment:
+        "Wow, wow, WOW! From the minute we walked in the door of Jason's beautiful home, we knew we'd found someplace special. Our group was large, spanning three generations, and we had so much fun bouncing from one activity to the next... pool, ping pong, arcade games, karaoke, mini golf, trampoline... there was something for everyone! Five spacious bedrooms and 4.5 baths offered plenty of privacy while fantastic living areas enabled us to comfortably gather as a large group to relax and spend time together. The location was ideal with a great cafe a short stroll away and a kid-friendly beach directly across the street. It's clear that Jason takes pride in his luxurious, well-appointed home and goes to great lengths to offer his guests a 5-star experience. He was friendly, extremely accommodating on short notice and an absolute pleasure to work with. Our group all agreed we were lucky that Cyclone Alfred ruined our plans for Byron Bay because we had a perfect stay with you!",
+      highlight: ["three generations", "arcade games", "mini golf", "kid-friendly beach", "5-star experience"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "March 2025",
+    },
+    {
+      name: "Sue",
+      rating: 5,
+      comment:
+        "Jason's property is beautiful and has so much entertainment for the whole family. We had 3 generations for a big family Christmas and everyone enjoyed. It was great to be able to just walk across the road to the beach. The photos show exactly what the property looks like. We would personally would have liked a comfortable alfresco couch and dining area at the rear of the property to enjoy lounging whilst watching the kids play in the pool. Jason was always very responsive, helpful and kindly answered all of our questions! We wouldn't hesitate to recommend this place for a family holiday.",
+      highlight: ["3 generations", "big family Christmas", "walk across the road to the beach", "very responsive", "recommend"],
+      source: "airbnb",
+      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
+      date: "December 2024",
+    },
+    {
       name: "Lisa",
       rating: 5,
       comment: "Our stay at Jason's air bnb was absolutely fantastic for our large family. It was the perfect place to celebrate our daughter's 40th birthday and granddaughter's birthday with all our family. Thankyou very much Jason.",
@@ -445,15 +513,6 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
       date: "1 week ago",
     },
     {
-      name: "Julio",
-      rating: 5,
-      comment: "Awesome house and host - 10/10",
-      highlight: ["Awesome", "host", "10/10"],
-      source: "airbnb",
-      sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
-      date: "2 weeks ago",
-    },
-    {
       name: "Madison",
       rating: 5,
       comment:
@@ -463,46 +522,71 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
       sourceUrl: "https://www.airbnb.com.au/rooms/1043607785247725387/reviews",
       date: "2 weeks ago",
     },
-    {
-      name: "Karen",
-      rating: 5,
-      comment: "Property had everything we needed for our family getaway.",
-      highlight: ["everything we needed", "family getaway"],
-      source: "booking",
-      sourceUrl: "https://www.booking.com/hotel/au/amazing-backyard-max-entertain-beachside-retreat.en-gb.html",
-      date: "Booking.com guest review",
-    },
-    {
-      name: "Piper",
-      rating: 5,
-      comment: "The facilities were fantastic and made it a great holiday with friends.",
-      highlight: ["facilities", "fantastic", "holiday with friends"],
-      source: "booking",
-      sourceUrl: "https://www.booking.com/hotel/au/amazing-backyard-max-entertain-beachside-retreat.en-gb.html",
-      date: "Booking.com guest review",
-    },
-    {
-      name: "Pascale",
-      rating: 5,
-      comment:
-        "Everything was perfect! We came in the middle of winter so weren’t able to use the epic pool but there are so many other activities to do. The kids had a great time and didn’t want to leave!",
-      highlight: ["Everything was perfect", "epic pool", "other activities", "didn’t want to leave"],
-      source: "booking",
-      sourceUrl: "https://www.booking.com/hotel/au/amazing-backyard-max-entertain-beachside-retreat.en-gb.html",
-      date: "Booking.com guest review",
-    },
   ],
   localArea: {
     title: "Explore the Mornington Peninsula",
     description: "The Mornington Peninsula has long been a favourite destination for coastal holidays and cosy winter escapes. In the warmer months, swimming and surf beaches await whilst seaside restaurants and local markets provide an array of places to eat and drink.",
     attractions: [
-      { name: "Beach", distance: "10m walk", type: "beach" },
-      { name: "Peninsular Hot Springs", distance: "8 min drive", type: "attraction" },
-      { name: "Alba Thermal Springs and Spa", distance: "7 min drive", type: "attraction" },
-      { name: "Rye Center", distance: "2 km", type: "shopping" },
-      { name: "Rosebud Plaza", distance: "6 min drive", type: "shopping" },
-      { name: "Wineries and Cellar Doors", distance: "Various locations", type: "restaurant" },
-      { name: "Golf Courses", distance: "Throughout region", type: "activity" },
+      {
+        name: "Rye Pier",
+        type: "attraction",
+        image: "/images/nearby/rye-pier.webp",
+        drive: { distanceKm: 3.1, durationMin: 6 },
+      },
+      {
+        name: "Peninsula Hot Springs",
+        type: "activity",
+        image: "/images/nearby/peninsula-hot-springs.jpeg",
+        drive: { distanceKm: 7.1, durationMin: 10 },
+      },
+      {
+        name: "Alba Thermal Springs & Spa",
+        type: "activity",
+        image: "/images/nearby/alba-optimized.jpg",
+        drive: { distanceKm: 5.8, durationMin: 8 },
+      },
+      {
+        name: "Rosebud Plaza",
+        type: "shopping",
+        image: "/images/nearby/rosebud-plaza.jpg",
+        drive: { distanceKm: 4.2, durationMin: 6 },
+      },
+      {
+        name: "Pt. Leo Estate",
+        type: "restaurant",
+        image: "/images/nearby/pt-leo-estate.jpeg",
+        drive: { distanceKm: 27.7, durationMin: 28 },
+      },
+      {
+        name: "The Cups Estate",
+        type: "restaurant",
+        image: "/images/nearby/the-cups-estate.jpg",
+        drive: { distanceKm: 5.0, durationMin: 6 },
+      },
+      {
+        name: "Moonah Links Golf",
+        type: "activity",
+        image: "/images/nearby/moonah-links-golf.jpg",
+        drive: { distanceKm: 6.4, durationMin: 9 },
+      },
+      {
+        name: "The National Golf Club",
+        type: "activity",
+        image: "/images/nearby/national-golf-club.jpg",
+        drive: { distanceKm: 14.5, durationMin: 17 },
+      },
+      {
+        name: "RACV Cape Schanck Resort",
+        type: "activity",
+        image: "/images/nearby/racv-cape-schanck.jpg",
+        drive: { distanceKm: 14.3, durationMin: 16 },
+      },
+      {
+        name: "The Dunes Golf Links",
+        type: "activity",
+        image: "/images/nearby/the-dunes-golf-links.webp",
+        drive: { distanceKm: 4.6, durationMin: 7 },
+      },
     ],
   },
   contact: {
@@ -522,6 +606,12 @@ This helps keep the home safe, quiet and comfortable for families and neighbours
       year: "2024",
       category: "Best Family Friendly Stay",
       image: "/images/awards/airbnb_award.jpg",
+    },
+    {
+      title: "Booking.com Traveller Review Awards",
+      year: "2026",
+      category: "Traveller Review Awards",
+      image: "/images/awards/booking_review_awards_2026.png",
     },
   ],
 };

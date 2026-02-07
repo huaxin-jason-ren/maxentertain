@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
@@ -35,8 +36,38 @@ function renderHighlightedText(text: string, keywords?: string[]) {
 }
 
 export default function Testimonials() {
+  const [isExpandedMobile, setIsExpandedMobile] = useState(false)
+  const testimonials = propertyConfig.testimonials
+  const firstFour = testimonials.slice(0, 4)
+  const rest = testimonials.slice(4)
+
+  const ReviewCard = ({ testimonial, index }: { testimonial: (typeof testimonials)[number]; index: number }) => (
+    <motion.div
+      key={`${testimonial.name}-${testimonial.date}-${index}`}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: index * 0.1 }}
+      className="bg-gradient-to-br from-luxury-light to-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
+    >
+      <Quote className="text-luxury-gold mb-4" size={32} />
+      <div className="flex gap-1 mb-4">
+        {Array.from({ length: testimonial.rating }).map((_, i) => (
+          <Star key={i} className="fill-luxury-gold text-luxury-gold" size={20} />
+        ))}
+      </div>
+      <p className="text-gray-700 mb-6 leading-relaxed italic">
+        &ldquo;{renderHighlightedText(testimonial.comment, testimonial.highlight)}&rdquo;
+      </p>
+      <div className="border-t pt-4">
+        <p className="font-semibold text-luxury-dark">{testimonial.name}</p>
+        <p className="text-sm text-gray-500">{testimonial.date}</p>
+      </div>
+    </motion.div>
+  )
+
   return (
-    <section id="testimonials" className="section-padding bg-white">
+    <section id="testimonials" className="section-padding bg-gradient-to-b from-white via-[#003580]/[0.03] to-white scroll-mt-24 md:scroll-mt-28">
       <div className="container-custom">
         {/* Keep #award anchor working, but visually combine Award + Reviews */}
         <div id="award" className="mb-16">
@@ -57,35 +88,35 @@ export default function Testimonials() {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {propertyConfig.testimonials.map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-luxury-light to-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
-            >
-              <Quote className="text-luxury-gold mb-4" size={32} />
-              <div className="flex gap-1 mb-4">
-                {Array.from({ length: testimonial.rating }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="fill-luxury-gold text-luxury-gold"
-                    size={20}
-                  />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-6 leading-relaxed italic">
-                &ldquo;{renderHighlightedText(testimonial.comment, testimonial.highlight)}&rdquo;
-              </p>
-              <div className="border-t pt-4">
-                <p className="font-semibold text-luxury-dark">{testimonial.name}</p>
-                <p className="text-sm text-gray-500">{testimonial.date}</p>
-              </div>
-            </motion.div>
+          {firstFour.map((testimonial, index) => (
+            <ReviewCard key={`${testimonial.name}-${testimonial.date}-${index}`} testimonial={testimonial} index={index} />
           ))}
+
+          {/* Desktop always shows all reviews; mobile shows the rest when expanded */}
+          <div className={isExpandedMobile ? 'contents' : 'hidden md:contents'}>
+            {rest.map((testimonial, index) => (
+              <ReviewCard
+                key={`${testimonial.name}-${testimonial.date}-${index + 4}`}
+                testimonial={testimonial}
+                index={index + 4}
+              />
+            ))}
+          </div>
         </div>
+
+        {/* Mobile: fold extra reviews behind a toggle */}
+        {rest.length > 0 && (
+          <div className="mt-10 md:hidden flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsExpandedMobile((v) => !v)}
+              className="btn-secondary px-8 py-3"
+              aria-expanded={isExpandedMobile}
+            >
+              {isExpandedMobile ? 'Show fewer reviews' : `Show ${rest.length} more reviews`}
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )

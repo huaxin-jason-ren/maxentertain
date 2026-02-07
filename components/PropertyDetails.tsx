@@ -22,7 +22,7 @@ export default function PropertyDetails() {
   )
 
   return (
-    <section id="details" className="section-padding bg-white">
+    <section id="details" className="section-padding bg-white scroll-mt-24 md:scroll-mt-28">
       <div className="container-custom">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

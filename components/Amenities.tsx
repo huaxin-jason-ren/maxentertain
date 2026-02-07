@@ -132,7 +132,7 @@ export default function Amenities() {
   )
 
   return (
-    <section id="amenities" className="section-padding bg-gradient-to-b from-white to-luxury-light">
+    <section id="amenities" className="section-padding bg-gradient-to-b from-white to-luxury-light scroll-mt-24 md:scroll-mt-28">
       <div className="container-custom">
         <div className="text-center mb-16">
           <h2 className="heading-primary">Amenities & Features</h2>

@@ -6,6 +6,15 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { propertyConfig } from '@/config/property'
 
+function moveImageToFront(images: string[], filename: string) {
+  const idx = images.findIndex((p) => p.split('/').pop() === filename)
+  if (idx <= 0) return images
+  const copy = [...images]
+  const [hit] = copy.splice(idx, 1)
+  copy.unshift(hit)
+  return copy
+}
+
 export default function ImageGallery() {
   // Lightbox removed: keep gallery as a simple, non-clickable grid
   // Use compressed images for gallery thumbnails (faster loading)
@@ -16,11 +25,16 @@ export default function ImageGallery() {
   const hdImages = propertyConfig.images.length > 0 
     ? propertyConfig.images 
     : ['/images/placeholder.jpg']
-  const images = thumbnailImages.length > 0 ? thumbnailImages : hdImages
+
+  // Prefer the first Games & Theatre image as the leading gallery photo.
+  const PREFERRED_FIRST_FILENAME = '_DSC7896.jpg'
+  const orderedThumbnails = moveImageToFront(thumbnailImages, PREFERRED_FIRST_FILENAME)
+  const orderedHdImages = moveImageToFront(hdImages, PREFERRED_FIRST_FILENAME)
+  const images = orderedThumbnails.length > 0 ? orderedThumbnails : orderedHdImages
   
   // Get HD image for lightbox
   const getHdImage = (index: number) => {
-    return hdImages[index] || images[index] || '/images/placeholder.jpg'
+    return orderedHdImages[index] || images[index] || '/images/placeholder.jpg'
   }
 
   // (lightbox handlers removed)
@@ -32,7 +46,7 @@ export default function ImageGallery() {
 
   return (
     <>
-      <section id="gallery" className="section-padding bg-white">
+      <section id="gallery" className="section-padding bg-white scroll-mt-24 md:scroll-mt-28">
         <div className="container-custom">
           {/* Mobile: keep current animated heading */}
           <motion.div
@@ -108,8 +122,10 @@ export default function ImageGallery() {
           <div className="hidden md:block">
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {desktopImages.map((image, index) => (
-                <div
+                <Link
                   key={index}
+                  href="/photos"
+                  aria-label={`Open all photos (photo ${index + 1})`}
                   className="relative aspect-[4/3] rounded-xl overflow-hidden"
                 >
                   <Image
@@ -135,7 +151,7 @@ export default function ImageGallery() {
                       }
                     }}
                   />
-                </div>
+                </Link>
               ))}
             </div>
 
