@@ -9,7 +9,7 @@ export default function InquiryPage() {
       {/* Fixed background */}
       <div className="fixed inset-0 -z-10">
         <Image
-          src="/images/hd/_DSC7896.jpg"
+          src="/images/hd/Backyard.jpg"
           alt="Property background"
           fill
           priority

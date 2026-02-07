@@ -6,6 +6,8 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 
 export default function PhotosGallery() {
+  const safeSrc = (src: string) => encodeURI(src)
+
   const sections = useMemo(() => {
     const defined = propertyConfig.photoSections
     if (defined && defined.length > 0) return defined
@@ -93,14 +95,14 @@ export default function PhotosGallery() {
   return (
     <>
       {/* Jump nav */}
-      <div className="mb-8">
-        <div className="text-sm font-semibold text-gray-700 mb-3">Jump to section</div>
-        <div className="flex flex-wrap gap-2">
+      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 lg:-mx-16 px-4 md:px-8 lg:px-16 py-4 mb-6 bg-gray-50/90 backdrop-blur border-b border-black/5">
+        <div className="text-xs font-semibold text-gray-700 mb-2">Jump to section</div>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {sections.map((s) => (
             <a
               key={s.id}
               href={`#section-${s.id}`}
-              className="px-3 py-2 rounded-full border text-sm text-gray-700 hover:text-luxury-gold hover:border-luxury-gold transition-colors"
+              className="shrink-0 px-3 py-1.5 rounded-full border bg-white text-xs text-gray-700 hover:text-luxury-gold hover:border-luxury-gold transition-colors"
             >
               {s.title}
             </a>
@@ -109,23 +111,30 @@ export default function PhotosGallery() {
       </div>
 
       {/* Sectioned gallery */}
-      <div className="space-y-10">
+      <div className="space-y-6 md:space-y-8">
         {sections.map((section) => {
           const items = flat.filter((p) => p.sectionId === section.id)
           if (items.length === 0) return null
 
           return (
-            <section key={section.id} id={`section-${section.id}`}>
-              <h2 className="text-2xl md:text-3xl font-serif font-bold text-luxury-dark mb-4">
-                {section.title}
-              </h2>
+            <section
+              key={section.id}
+              id={`section-${section.id}`}
+              className="scroll-mt-24 md:scroll-mt-28 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4 md:p-6"
+            >
+              <div className="flex items-baseline justify-between gap-4 mb-3 md:mb-4">
+                <h2 className="text-xl md:text-2xl font-serif font-bold text-luxury-dark">
+                  {section.title}
+                </h2>
+                <div className="text-xs text-gray-500">{items.length} photos</div>
+              </div>
 
               {/* Mobile: 2 per row */}
-              <div className="md:hidden grid grid-cols-2 gap-3">
+              <div className="md:hidden grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {items.map((p) => (
                   <div key={p.hdSrc} className="relative aspect-[4/3] w-full rounded-xl overflow-hidden">
                     <Image
-                      src={p.thumbSrc}
+                      src={safeSrc(p.thumbSrc)}
                       alt={`${propertyConfig.name} - ${section.title}`}
                       fill
                       className="object-cover"
@@ -135,7 +144,7 @@ export default function PhotosGallery() {
                       unoptimized={false}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
-                        target.src = p.hdSrc || '/images/placeholder.jpg'
+                        target.src = safeSrc(p.hdSrc || '/images/placeholder.jpg')
                       }}
                     />
                   </div>
@@ -143,7 +152,7 @@ export default function PhotosGallery() {
               </div>
 
               {/* Desktop/tablet */}
-              <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+              <div className="hidden md:grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                 {items.map((p) => {
                   const globalIndex = flat.findIndex((x) => x.hdSrc === p.hdSrc)
                   const idx = globalIndex >= 0 ? globalIndex : 0
@@ -167,7 +176,7 @@ export default function PhotosGallery() {
                         : {})}
                     >
                       <Image
-                        src={p.thumbSrc}
+                        src={safeSrc(p.thumbSrc)}
                         alt={`${propertyConfig.name} - ${section.title}`}
                         fill
                         className="object-cover"
@@ -177,7 +186,7 @@ export default function PhotosGallery() {
                         unoptimized={false}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
-                          target.src = p.hdSrc || '/images/placeholder.jpg'
+                          target.src = safeSrc(p.hdSrc || '/images/placeholder.jpg')
                         }}
                       />
                     </div>
@@ -215,7 +224,9 @@ export default function PhotosGallery() {
 
           <div className="relative w-[92vw] max-w-5xl h-[70vh] md:h-[80vh]">
             <Image
-              src={flat[activeIndex]?.hdSrc || flat[activeIndex]?.thumbSrc || '/images/placeholder.jpg'}
+              src={safeSrc(
+                flat[activeIndex]?.hdSrc || flat[activeIndex]?.thumbSrc || '/images/placeholder.jpg',
+              )}
               alt={`${propertyConfig.name} - Photo ${activeIndex + 1}`}
               fill
               className="object-contain"

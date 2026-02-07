@@ -7,9 +7,8 @@ import { Calendar } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 
 export default function Hero() {
-  // Prefer the HD version of _DSC8072.jpg for the homepage hero image
-  const heroKey = '_DSC8072'
-  const heroImage = `/images/hd/${heroKey}.jpg`
+  // Homepage hero image (renamed, stored under `/public/images/hd/*`).
+  const heroImage = '/images/hd/exterior2.jpg'
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -33,15 +32,9 @@ export default function Hero() {
               quality={85}
               unoptimized={false}
               onError={(e) => {
-                // Fallback to HD version if compressed fails
+                // Fallback to the first configured gallery image.
                 const target = e.target as HTMLImageElement
-                const hdFallback =
-                  propertyConfig.images.find((img) => img.includes(heroKey)) || propertyConfig.images[0]
-                if (hdFallback) {
-                  target.src = hdFallback
-                } else {
-                  target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"%3E%3Crect fill="%23ddd" width="1200" height="800"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="24" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EProperty Image%3C/text%3E%3C/svg%3E'
-                }
+                target.src = propertyConfig.images[0] || '/images/placeholder.jpg'
               }}
             />
           </div>

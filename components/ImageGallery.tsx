@@ -16,6 +16,8 @@ function moveImageToFront(images: string[], filename: string) {
 }
 
 export default function ImageGallery() {
+  const safeSrc = (src: string) => encodeURI(src)
+
   // Lightbox removed: keep gallery as a simple, non-clickable grid
   // Use compressed images for gallery thumbnails (faster loading)
   const thumbnailImages = propertyConfig.imagesCompressed && propertyConfig.imagesCompressed.length > 0
@@ -26,8 +28,8 @@ export default function ImageGallery() {
     ? propertyConfig.images 
     : ['/images/placeholder.jpg']
 
-  // Prefer the first Games & Theatre image as the leading gallery photo.
-  const PREFERRED_FIRST_FILENAME = '_DSC7896.jpg'
+  // Mobile scrolling gallery: start with the first exterior photo.
+  const PREFERRED_FIRST_FILENAME = 'exterior.jpg'
   const orderedThumbnails = moveImageToFront(thumbnailImages, PREFERRED_FIRST_FILENAME)
   const orderedHdImages = moveImageToFront(hdImages, PREFERRED_FIRST_FILENAME)
   const images = orderedThumbnails.length > 0 ? orderedThumbnails : orderedHdImages
@@ -98,7 +100,7 @@ export default function ImageGallery() {
                     aria-label={`Open all photos (photo ${index + 1})`}
                   >
                     <Image
-                      src={image}
+                      src={safeSrc(image)}
                       alt={`${propertyConfig.name} - Photo ${index + 1}`}
                       fill
                       className="object-cover"
@@ -109,7 +111,7 @@ export default function ImageGallery() {
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         const hdFallback = getHdImage(index)
-                        target.src = hdFallback || '/images/placeholder.jpg'
+                        target.src = safeSrc(hdFallback || '/images/placeholder.jpg')
                       }}
                     />
                   </Link>
@@ -129,7 +131,7 @@ export default function ImageGallery() {
                   className="relative aspect-[4/3] rounded-xl overflow-hidden"
                 >
                   <Image
-                    src={image}
+                    src={safeSrc(image)}
                     alt={`${propertyConfig.name} - Gallery Image ${index + 1}`}
                     fill
                     className="object-cover"
@@ -144,7 +146,7 @@ export default function ImageGallery() {
                       const target = e.target as HTMLImageElement
                       const hdFallback = getHdImage(index)
                       if (hdFallback && hdFallback !== '/images/placeholder.jpg') {
-                        target.src = hdFallback
+                        target.src = safeSrc(hdFallback)
                       } else {
                         target.src =
                           'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600"%3E%3Crect fill="%23ddd" width="800" height="600"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="20" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EProperty Image%3C/text%3E%3C/svg%3E'
