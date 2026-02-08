@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import { propertyConfig } from '@/config/property'
 
 export default function AwardBanner({ embedded = false }: { embedded?: boolean }) {
@@ -9,13 +8,7 @@ export default function AwardBanner({ embedded = false }: { embedded?: boolean }
   if (awards.length === 0) return null
 
   const content = (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col items-center text-center"
-        >
+        <div className="flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100 text-yellow-900 border border-yellow-200 shadow-sm mb-5">
             <span className="text-sm font-semibold tracking-wide uppercase">Award recognition</span>
           </div>
@@ -56,7 +49,7 @@ export default function AwardBanner({ embedded = false }: { embedded?: boolean }
               })}
             </div>
           </div>
-        </motion.div>
+        </div>
   )
 
   if (embedded) return content

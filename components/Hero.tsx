@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { Calendar } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 
@@ -18,12 +17,7 @@ export default function Hero() {
     <section className="relative h-screen w-full overflow-hidden">
       {/* Single Hero Image */}
       <div className="relative h-full w-full">
-        <motion.div
-          className="absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        >
+        <div className="absolute inset-0">
           {/* Lighter overlay so more of the hero photo shows through */}
           <div className="relative w-full h-full bg-gradient-to-r from-black/55 via-black/35 to-black/20">
             <Image
@@ -42,17 +36,13 @@ export default function Hero() {
               }}
             />
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Hero Content */}
       <div className="absolute inset-0 z-10 flex items-center justify-center">
         <div className="container-custom px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
+          <div>
             {/* More transparent content panel to reveal the HD background */}
             <div className="mx-auto max-w-4xl bg-black/15 backdrop-blur-md rounded-3xl p-8 md:p-12 shadow-2xl border border-white/10">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 drop-shadow-2xl">
@@ -134,20 +124,18 @@ export default function Hero() {
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Scroll Indicator */}
-      <motion.div
+      <div
         className="absolute bottom-8 right-8 z-20"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ repeat: Infinity, duration: 2 }}
       >
         <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
           <div className="w-1 h-3 bg-white/50 rounded-full mt-2"></div>
         </div>
-      </motion.div>
+      </div>
     </section>
   )
 }

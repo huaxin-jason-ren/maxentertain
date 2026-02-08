@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { Calendar as CalendarIcon, RefreshCw } from 'lucide-react'
 import { blockedDates as defaultBlockedDates } from '@/config/property'
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, isPast, isToday, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
@@ -84,26 +83,14 @@ export default function Calendar({
   return (
     <section id="calendar" className="section-padding bg-white scroll-mt-24 md:scroll-mt-28">
       <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <h2 className="heading-primary">Availability Calendar</h2>
           <p className="text-luxury text-gray-600">
             Check available dates for your stay
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="max-w-4xl mx-auto"
-        >
+        <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl p-8">
             {/* Calendar Header */}
             <div className="flex items-center justify-between mb-8">
@@ -214,7 +201,7 @@ export default function Calendar({
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

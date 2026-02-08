@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 import AwardBanner from '@/components/AwardBanner'
@@ -42,12 +41,8 @@ export default function Testimonials() {
   const rest = testimonials.slice(4)
 
   const ReviewCard = ({ testimonial, index }: { testimonial: (typeof testimonials)[number]; index: number }) => (
-    <motion.div
+    <div
       key={`${testimonial.name}-${testimonial.date}-${index}`}
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
       className="bg-gradient-to-br from-luxury-light to-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
     >
       <Quote className="text-luxury-gold mb-4" size={32} />
@@ -63,7 +58,7 @@ export default function Testimonials() {
         <p className="font-semibold text-luxury-dark">{testimonial.name}</p>
         <p className="text-sm text-gray-500">{testimonial.date}</p>
       </div>
-    </motion.div>
+    </div>
   )
 
   return (
@@ -74,18 +69,12 @@ export default function Testimonials() {
           <AwardBanner embedded />
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <h2 className="heading-primary">Guest Reviews</h2>
           <p className="text-luxury text-gray-600">
             See what our guests have to say about their stay
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {firstFour.map((testimonial, index) => (

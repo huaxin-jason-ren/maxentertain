@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import { FaMapMarkerAlt } from 'react-icons/fa'
 import { 
   FaUtensils,
@@ -37,26 +36,14 @@ export default function LocalArea() {
   return (
     <section id="local-area" className="section-padding bg-gradient-to-b from-luxury-light to-white scroll-mt-24 md:scroll-mt-28">
       <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <h2 className="heading-primary">{propertyConfig.localArea.title}</h2>
           <p className="text-luxury text-gray-600 max-w-2xl mx-auto">
             {propertyConfig.localArea.description}
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {attractions.map((attraction, index) => {
             const Icon = attractionIcons[attraction.type] || FaMapMarkerAlt
             const driveMin = attraction.drive?.durationMin
@@ -67,14 +54,9 @@ export default function LocalArea() {
                 : attraction.distance
 
             return (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden"
+                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden hover:-translate-y-1 hover:scale-[1.02] will-change-transform"
               >
                 {attraction.image && (
                   <div className="relative w-full aspect-[16/10]">
@@ -105,19 +87,13 @@ export default function LocalArea() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )
           })}
-        </motion.div>
+        </div>
 
         {/* Interactive Google Maps */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-12 rounded-2xl overflow-hidden shadow-xl"
-        >
+        <div className="mt-12 rounded-2xl overflow-hidden shadow-xl">
           <div className="w-full h-96 relative">
             {/* Google Maps Embed - Works without API key for basic embeds */}
             <iframe
@@ -144,7 +120,7 @@ export default function LocalArea() {
               </a>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

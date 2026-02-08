@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { propertyConfig } from '@/config/property'
 
 function moveImageToFront(images: string[], filename: string) {
@@ -53,14 +52,8 @@ export default function ImageGallery() {
     <>
       <section id="gallery" className="section-padding bg-white scroll-mt-24 md:scroll-mt-28">
         <div className="container-custom">
-          {/* Mobile: keep current animated heading */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12 md:hidden"
-          >
+          {/* Mobile */}
+          <div className="text-center mb-12 md:hidden">
             <h2 className="heading-primary">Photo Gallery</h2>
             <p className="text-luxury text-gray-600">
               Take a closer look at our beautiful property
@@ -71,7 +64,7 @@ export default function ImageGallery() {
                 View all photos
               </Link>
             </div>
-          </motion.div>
+          </div>
 
           {/* Desktop: remove “gradually appearing” animation */}
           <div className="hidden md:block text-center mb-12">
