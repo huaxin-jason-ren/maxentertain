@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Bed, Bath, Users, MapPin } from 'lucide-react'
 import { propertyConfig } from '@/config/property'
 
@@ -23,16 +24,28 @@ export default function PropertyDetails() {
   return (
     <section id="details" className="section-padding bg-white scroll-mt-24 md:scroll-mt-28">
       <div className="container-custom">
-        <div className="text-center mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <h2 className="heading-primary">{propertyConfig.name}</h2>
           <div className="flex items-center justify-center gap-2 text-luxury-accent mb-8">
             <MapPin size={20} />
             <p className="text-xl">{propertyConfig.location}</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Property Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
+        >
           {details.map((detail, index) => {
             const Icon = detail.icon
             return (
@@ -50,10 +63,16 @@ export default function PropertyDetails() {
               </div>
             )
           })}
-        </div>
+        </motion.div>
 
         {/* Description */}
-        <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="max-w-4xl mx-auto"
+        >
           <div className="relative mb-12">
             <h3 className="text-4xl md:text-5xl font-serif font-bold text-luxury-dark mb-4 text-center">
               About This Property
@@ -120,10 +139,16 @@ export default function PropertyDetails() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Policies */}
-        <div className="max-w-4xl mx-auto mt-16 grid md:grid-cols-2 gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="max-w-4xl mx-auto mt-16 grid md:grid-cols-2 gap-8"
+        >
           <div className="bg-luxury-light p-8 rounded-2xl">
             <h4 className="text-xl font-serif font-semibold mb-4 text-luxury-dark">
               Check-in & Check-out
@@ -141,11 +166,17 @@ export default function PropertyDetails() {
             </h4>
             <p className="text-gray-700">{propertyConfig.policies.cancellation}</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* House Rules */}
         {propertyConfig.policies.houseRules.length > 0 && (
-          <div className="max-w-4xl mx-auto mt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="max-w-4xl mx-auto mt-8"
+          >
             <h4 className="text-xl font-serif font-semibold mb-4 text-luxury-dark">
               House Rules
             </h4>
@@ -157,7 +188,7 @@ export default function PropertyDetails() {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
         )}
       </div>
     </section>
