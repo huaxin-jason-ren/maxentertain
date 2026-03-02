@@ -262,7 +262,10 @@ export default function PhotosGallery() {
         >
           <button
             type="button"
-            onClick={close}
+            onClick={(e) => {
+              e.stopPropagation()
+              close()
+            }}
             className="absolute top-3 right-3 md:top-4 md:right-4 text-white/90 hover:text-white p-3 rounded-full bg-black/30 hover:bg-black/40 transition-colors"
             aria-label="Close"
           >
@@ -271,7 +274,10 @@ export default function PhotosGallery() {
 
           <button
             type="button"
-            onClick={prev}
+            onClick={(e) => {
+              e.stopPropagation()
+              prev()
+            }}
             className="hidden md:inline-flex absolute left-2 md:left-6 text-white/90 hover:text-white p-2 rounded-full bg-black/20 hover:bg-black/30 transition-colors"
             aria-label="Previous photo"
           >
@@ -296,7 +302,10 @@ export default function PhotosGallery() {
 
           <button
             type="button"
-            onClick={next}
+            onClick={(e) => {
+              e.stopPropagation()
+              next()
+            }}
             className="hidden md:inline-flex absolute right-2 md:right-6 text-white/90 hover:text-white p-2 rounded-full bg-black/20 hover:bg-black/30 transition-colors"
             aria-label="Next photo"
           >

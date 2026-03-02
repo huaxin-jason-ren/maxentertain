@@ -40,10 +40,12 @@ Edit `config/property.ts` to update:
 
 ### Images
 
-- Put images in `public/images/`
-- This project also supports:
-  - `public/images/compressed/` for faster gallery thumbnails
-  - `public/Airbnb picture/1975 Point Nepean Road- HD/` for the photo gallery (single source of truth)
+- **Single source of truth**: put all property photos under:
+  - `public/Airbnb picture/1975 Point Nepean Road- HD/`
+
+Other property assets:
+- `public/Airbnb picture/icons_files/` (icons + awards)
+- `public/Airbnb picture/nearby photos/` (nearby attraction images)
 
 Update the image arrays in `config/property.ts` to match your filenames.
 
@@ -83,6 +85,25 @@ NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=...
 ```
 
 Note: `config/emailjs.ts` currently includes defaults. For production, prefer setting env vars in Vercel.
+
+### AI guest chat (server + client)
+
+The floating guest chat widget uses Anthropic (Claude) via `/api/chat`.
+
+Server-side env vars:
+
+```bash
+ANTHROPIC_API_KEY=...
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+```
+
+Client-side feature flag (optional):
+
+```bash
+NEXT_PUBLIC_CHAT_ENABLED=true
+```
+
+Set `NEXT_PUBLIC_CHAT_ENABLED=false` to disable the widget without code changes.
 
 ## Deployment (Vercel)
 

@@ -4,6 +4,7 @@ import Script from 'next/script'
 import './globals.css'
 import { propertyConfig } from '@/config/property'
 import { getSiteUrl } from '@/lib/site'
+import GuestChatWidget from '@/components/GuestChatWidget'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -43,6 +44,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const iconHref = encodeURI('/Airbnb picture/icons_files/Icon.png')
+  // Hide by default; set NEXT_PUBLIC_CHAT_ENABLED=true when keys are ready.
+  const chatEnabled = process.env.NEXT_PUBLIC_CHAT_ENABLED === 'true'
 
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
@@ -65,6 +68,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {children}
+        {chatEnabled ? <GuestChatWidget /> : null}
       </body>
     </html>
   )

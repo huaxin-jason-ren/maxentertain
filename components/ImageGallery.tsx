@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { propertyConfig } from '@/config/property'
@@ -20,6 +20,21 @@ export default function ImageGallery() {
 
   const safeSrc = (src: string) => (src.startsWith('data:') ? src : encodeURI(src))
 
+  const shuffle = (arr: string[], seed: number) => {
+    const copy = [...arr]
+    let s = seed >>> 0
+    const rand = () => {
+      // LCG (fast, deterministic per seed)
+      s = (1664525 * s + 1013904223) >>> 0
+      return s / 0xffffffff
+    }
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1))
+      ;[copy[i], copy[j]] = [copy[j]!, copy[i]!]
+    }
+    return copy
+  }
+
   // Lightbox removed: keep gallery as a simple, non-clickable grid
   // Use compressed images for gallery thumbnails (faster loading)
   const thumbnailImages = propertyConfig.imagesCompressed && propertyConfig.imagesCompressed.length > 0
@@ -30,11 +45,14 @@ export default function ImageGallery() {
     ? propertyConfig.images 
     : [PLACEHOLDER]
 
-  // Mobile scrolling gallery: start with the first exterior photo.
-  const PREFERRED_FIRST_FILENAME = 'exterior.jpg'
-  const orderedThumbnails = moveImageToFront(thumbnailImages, PREFERRED_FIRST_FILENAME)
-  const orderedHdImages = moveImageToFront(hdImages, PREFERRED_FIRST_FILENAME)
-  const images = orderedThumbnails.length > 0 ? orderedThumbnails : orderedHdImages
+  // Randomize gallery photos once per page load.
+  const [seed] = useState(() => Math.floor(Math.random() * 1_000_000_000))
+  const images = useMemo(() => {
+    const base = thumbnailImages.length > 0 ? thumbnailImages : hdImages
+    return shuffle(base, seed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed])
+  const orderedHdImages = useMemo(() => shuffle(hdImages, seed), [hdImages, seed])
   
   // Get HD image for lightbox
   const getHdImage = (index: number) => {
