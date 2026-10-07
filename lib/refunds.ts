@@ -33,7 +33,7 @@ export async function refundBookingPayments(
 
   const db = await getDb()
   if (!booking.payments?.length) {
-    await db.collection('bookings').updateOne(
+    await db.collection<BookingRecord>('bookings').updateOne(
       { _id: booking._id },
       { $set: { payments, updatedAt: new Date() } }
     )
@@ -62,7 +62,7 @@ export async function refundBookingPayments(
     payment.refundedAud = (payment.refundedAud ?? 0) + amountAud
     payment.refundIds = [...(payment.refundIds ?? []), refund.id]
     remainingAud -= amountAud
-    await db.collection('bookings').updateOne(
+    await db.collection<BookingRecord>('bookings').updateOne(
       { _id: booking._id, 'payments.id': payment.id },
       {
         $set: {

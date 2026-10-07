@@ -19,6 +19,7 @@ import type {
   BookingPaymentTransaction,
   BookingPricing,
   BookingRecord,
+  GuestRecord,
   PublicSpecialOffer,
   SpecialOfferRecord,
 } from '@/types/booking'
@@ -39,10 +40,10 @@ function duplicateKey(error: unknown): error is MongoServerError {
 async function ensureOfferIndexes(db: Db) {
   if (indexesEnsured) return
   await Promise.all([
-    db.collection('offers').createIndex({ tokenHash: 1 }, { unique: true }),
-    db.collection('offers').createIndex({ status: 1, expiresAt: 1 }),
-    db.collection('offers').createIndex({ bookingId: 1, createdAt: -1 }),
-    db.collection('offers').createIndex({ inquiryId: 1, createdAt: -1 }),
+    db.collection<SpecialOfferRecord>('offers').createIndex({ tokenHash: 1 }, { unique: true }),
+    db.collection<SpecialOfferRecord>('offers').createIndex({ status: 1, expiresAt: 1 }),
+    db.collection<SpecialOfferRecord>('offers').createIndex({ bookingId: 1, createdAt: -1 }),
+    db.collection<SpecialOfferRecord>('offers').createIndex({ inquiryId: 1, createdAt: -1 }),
   ])
   indexesEnsured = true
 }
@@ -349,7 +350,7 @@ export async function attachOfferCheckout(offerId: string, stripeSessionId: stri
 export async function markOfferEmailResult(offerId: string, error?: unknown) {
   const db = await getDb()
   const now = new Date()
-  await db.collection('offers').updateOne(
+  await db.collection<SpecialOfferRecord>('offers').updateOne(
     { _id: offerId },
     error
       ? { $set: { emailError: error instanceof Error ? error.message : String(error), updatedAt: now } }
@@ -418,7 +419,7 @@ export async function cleanupExpiredOffers() {
     .toArray()
   if (expired.length === 0) return 0
   const ids = expired.map((offer) => offer._id)
-  await db.collection('offers').updateMany(
+  await db.collection<SpecialOfferRecord>('offers').updateMany(
     { _id: { $in: ids } },
     { $set: { status: 'expired', updatedAt: now } }
   )
@@ -474,7 +475,7 @@ export async function confirmOfferPayment(offerId: string, payment: BookingPayme
         { offerId: offer._id },
         { $set: { bookingId, status: 'confirmed', updatedAt: now }, $unset: { offerId: '', expiresAt: '' } }
       )
-      await db.collection('offers').updateOne(
+      await db.collection<SpecialOfferRecord>('offers').updateOne(
         { _id: offer._id },
         { $set: { status: 'paid', bookingId, payment, paidAt: now, updatedAt: now } }
       )
@@ -539,7 +540,7 @@ export async function confirmOfferPayment(offerId: string, payment: BookingPayme
   }
   const priorPayments = booking.payments ?? [legacyTransaction(booking)].filter(Boolean) as BookingPaymentTransaction[]
   if (booking.checkOut === offer.checkOut && priorPayments.some((item) => item.offerId === offer._id)) {
-    await db.collection('offers').updateOne(
+    await db.collection<SpecialOfferRecord>('offers').updateOne(
       { _id: offer._id },
       { $set: { status: 'paid', payment, paidAt: now, updatedAt: now } }
     )
@@ -579,7 +580,7 @@ export async function confirmOfferPayment(offerId: string, payment: BookingPayme
     { _id: offer._id, status: 'checkout_pending' },
     { $set: { status: 'paid', payment, paidAt: now, updatedAt: now } }
   )
-  await db.collection('guests').updateOne(
+  await db.collection<GuestRecord>('guests').updateOne(
     { _id: booking.guest.email.toLowerCase() },
     {
       $set: { lastCheckOut: offer.checkOut, lastStayedAt: new Date(`${offer.checkOut}T00:00:00.000Z`), updatedAt: now },
@@ -622,7 +623,7 @@ export async function completeNonPaymentAmendment(offerId: string) {
       })
     : null
   if (refundResult) {
-    await db.collection('offers').updateOne(
+    await db.collection<SpecialOfferRecord>('offers').updateOne(
       { _id: offer._id },
       {
         $set: {
@@ -672,7 +673,7 @@ export async function completeNonPaymentAmendment(offerId: string) {
     { _id: offer._id },
     { $set: { status: 'completed', paidAt: now, updatedAt: now } }
   )
-  await db.collection('guests').updateOne(
+  await db.collection<GuestRecord>('guests').updateOne(
     { _id: booking.guest.email.toLowerCase() },
     {
       $set: {

@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       .skip((page - 1) * limit)
       .limit(limit)
       .toArray(),
-    db.collection('offers').countDocuments(),
+    db.collection<SpecialOfferRecord>('offers').countDocuments(),
   ])
   return NextResponse.json({ offers, total, page, pages: Math.max(1, Math.ceil(total / limit)) })
 }
