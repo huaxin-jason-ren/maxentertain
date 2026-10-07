@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, addMonths, subMonths } from 'date-fns'
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz'
 import { earliestCheckInStr, latestCheckInStr } from '@/lib/booking-window'
+import { isTurnoverCheckout } from '@/lib/stay-nights'
 
 const AU_TZ = 'Australia/Melbourne'
 
@@ -28,6 +29,7 @@ export default function DatePicker({
   blockedSet,
   minDateStr,
   minExclusive = false,
+  checkoutCheckIn,
   error,
   disabled = false,
   forceDarkText = false,
@@ -39,6 +41,8 @@ export default function DatePicker({
   blockedSet: Set<string>
   minDateStr: string
   minExclusive?: boolean
+  /** When set, this picker is choosing checkout and may select that stay's arrival morning. */
+  checkoutCheckIn?: string
   error?: string
   disabled?: boolean
   forceDarkText?: boolean
@@ -98,8 +102,8 @@ export default function DatePicker({
     if (dayStr > horizonCap) return true
     // Min date
     if (minExclusive ? dayStr <= minStr : dayStr < minStr) return true
-    // Blocked
-    if (blockedSet.has(dayStr)) return true
+    // Occupied nights cannot be a check-in. The arrival morning can still be a checkout.
+    if (blockedSet.has(dayStr) && !isTurnoverCheckout(checkoutCheckIn ?? '', dayStr, blockedSet)) return true
     return false
   }
 
@@ -172,6 +176,7 @@ export default function DatePicker({
               const inMonth = d >= monthStart && d <= monthEnd
               const disabledDay = isDisabledDay(d)
               const selected = value === dayStr
+              const checkoutOnly = !disabledDay && isTurnoverCheckout(checkoutCheckIn ?? '', dayStr, blockedSet)
 
               return (
                 <button
@@ -189,9 +194,11 @@ export default function DatePicker({
                       ? 'bg-luxury-gold/25 ring-2 ring-luxury-gold text-luxury-dark'
                       : disabledDay
                       ? 'bg-red-100 text-red-600 cursor-not-allowed'
+                      : checkoutOnly
+                      ? 'bg-green-50 text-green-800 ring-2 ring-inset ring-luxury-gold hover:bg-luxury-gold/30'
                       : 'bg-green-50 text-green-800 hover:bg-green-100'
                   }`}
-                  aria-label={`Select ${dayStr}`}
+                  aria-label={checkoutOnly ? `Check out on the morning of ${dayStr}` : `Select ${dayStr}`}
                 >
                   {formatInTimeZone(d, AU_TZ, 'd')}
                 </button>
@@ -201,6 +208,7 @@ export default function DatePicker({
 
           <div className="mt-3 text-sm text-gray-600">
             Unavailable, past, and next-3-days dates are disabled (3 days&rsquo; notice required).
+            {checkoutCheckIn ? ' A gold ring marks a morning you can check out, before the next guest arrives.' : ''}
           </div>
         </div>
       )}

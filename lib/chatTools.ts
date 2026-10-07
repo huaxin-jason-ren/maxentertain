@@ -1,6 +1,7 @@
 import { getBookingQuote, BookingValidationError } from '@/lib/bookings'
 import { groupNightsByTier, TIER_LABELS } from '@/lib/pricing'
 import { getSiteUrl } from '@/lib/site'
+import { nightDates } from '@/lib/stay-nights'
 
 /**
  * Tool layer for the MAX chat agent.
@@ -15,17 +16,6 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 function isIsoDate(value: unknown): value is string {
   return typeof value === 'string' && ISO_DATE.test(value)
-}
-
-/** All night dates (check-in inclusive, check-out exclusive) as YYYY-MM-DD. */
-function nightDatesInRange(checkIn: string, checkOut: string): string[] {
-  const out: string[] = []
-  const start = new Date(`${checkIn}T00:00:00Z`)
-  const end = new Date(`${checkOut}T00:00:00Z`)
-  for (let d = new Date(start); d < end; d.setUTCDate(d.getUTCDate() + 1)) {
-    out.push(d.toISOString().slice(0, 10))
-  }
-  return out
 }
 
 async function fetchBlockedDates(): Promise<Set<string>> {
@@ -119,7 +109,7 @@ async function runCheckAvailability(args: any): Promise<ToolResult> {
     return { response: { ok: false, error: 'Please provide a valid check-in and check-out date.' } }
   }
   const blocked = await fetchBlockedDates()
-  const nights = nightDatesInRange(checkIn, checkOut)
+  const nights = nightDates(checkIn, checkOut)
   const blockedNights = nights.filter((d) => blocked.has(d))
   return {
     intent: 'asked_availability',

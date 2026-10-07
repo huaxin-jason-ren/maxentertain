@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
@@ -9,6 +9,7 @@ import { useAvailability } from '@/hooks/useAvailability'
 import { blockedDates as defaultBlockedDates } from '@/config/property'
 import { getPriceSummary, groupNightsByTier, TIER_LABELS, NIGHTLY_RATES, PricingTier, PET_FEE_AUD } from '@/lib/pricing'
 import { MIN_ADVANCE_DAYS, earliestCheckInStr, latestCheckInStr } from '@/lib/booking-window'
+import { isTurnoverCheckout, nightDates, nightsIncludeBlocked } from '@/lib/stay-nights'
 import { trackClick } from '@/lib/analytics'
 
 type PricingState =
@@ -74,6 +75,7 @@ export default function Calendar({
   }, [])
 
   const blockedDates = blockedDatesProp ?? availability.blockedDates
+  const blockedSet = useMemo(() => new Set(blockedDates), [blockedDates])
   const isLoading = isLoadingProp ?? availability.isLoading
   const lastUpdated = lastUpdatedProp ?? availability.lastUpdated
 
@@ -95,12 +97,18 @@ export default function Calendar({
   // Date string helpers (all in AU timezone)
   const auStr = (date: Date) => formatInTimeZone(date, TZ, 'yyyy-MM-dd')
 
-  const isBlocked = (date: Date) => blockedDates.includes(auStr(date))
+  const isBlocked = (date: Date) => blockedSet.has(auStr(date))
   const isPast = (date: Date) => !!todayStr && auStr(date) < todayStr
   // Within the advance-notice window (today .. earliest-1): not bookable.
   const isTooSoon = (date: Date) => !!earliest && !isPast(date) && auStr(date) < earliest
   const isTooFar = (date: Date) => !!latest && auStr(date) > latest
   const isAvailable = (date: Date) => !isPast(date) && !isTooSoon(date) && !isTooFar(date) && !isBlocked(date)
+  // Arrival afternoon of an existing booking: selectable as checkout only.
+  const isCheckoutOnly = (date: Date) => {
+    if (!checkIn || checkOut) return false
+    if (isPast(date) || isTooSoon(date) || isTooFar(date)) return false
+    return isTurnoverCheckout(auStr(checkIn), auStr(date), blockedSet)
+  }
   const isToday = (date: Date) => auStr(date) === todayStr
   const isCheckIn = (date: Date) => !!checkIn && auStr(date) === auStr(checkIn)
   const isCheckOut = (date: Date) => !!checkOut && auStr(date) === auStr(checkOut)
@@ -110,58 +118,53 @@ export default function Calendar({
     return s > auStr(checkIn) && s < auStr(checkOut)
   }
 
-  // Check if a range from checkIn to candidate checkOut contains any blocked dates
-  const rangeHasBlocked = (from: Date, to: Date): boolean => {
-    const cur = new Date(from)
-    cur.setDate(cur.getDate() + 1)
-    while (auStr(cur) < auStr(to)) {
-      if (isBlocked(cur)) return true
-      cur.setDate(cur.getDate() + 1)
-    }
-    return false
-  }
-
   const handleDayClick = (day: Date) => {
-    if (!isAvailable(day)) return
+    if (isPast(day) || isTooSoon(day) || isTooFar(day)) return
 
-    if (!checkIn || (checkIn && checkOut)) {
+    const dayS = auStr(day)
+    const blocked = blockedSet.has(dayS)
+
+    // A booked night cannot start a stay. It can only end one, on the morning
+    // the next guest arrives.
+    if (!checkIn || checkOut) {
+      if (blocked) return
       setCheckIn(day)
       setCheckOut(null)
       return
     }
 
-    const dayS = auStr(day)
     const ciS = auStr(checkIn)
-
     if (dayS === ciS) return
 
     if (dayS < ciS) {
-      // Clicked before existing check-in — start fresh
+      if (blocked) return
       setCheckIn(day)
       setCheckOut(null)
       return
     }
 
-    // Clicked after check-in — set as check-out if range is clean
-    if (rangeHasBlocked(checkIn, day)) {
-      // Blocked dates in range — reset to new check-in
+    const turnover = blocked && isTurnoverCheckout(ciS, dayS, blockedSet)
+    if (blocked && !turnover) return
+
+    if (nightsIncludeBlocked(ciS, dayS, blockedSet)) {
       setCheckIn(day)
       setCheckOut(null)
-    } else {
-      // Enforce minimum nights: find the maximum minNights across all nights in the proposed range
-      const nights = eachDayOfInterval({ start: checkIn, end: day }).slice(0, -1) // exclude checkout day
-      const requiredMin = nights.reduce((max, n) => {
-        const mn = minNightsMap[auStr(n)]
-        return mn && mn > max ? mn : max
-      }, 1)
-      if (nights.length < requiredMin) {
-        // Fewer nights than required — restart selection from clicked date
-        setCheckIn(day)
-        setCheckOut(null)
-      } else {
-        setCheckOut(day)
-      }
+      return
     }
+
+    const nights = nightDates(ciS, dayS)
+    const requiredMin = nights.reduce((max, night) => {
+      const minNights = minNightsMap[night]
+      return minNights && minNights > max ? minNights : max
+    }, 1)
+    if (nights.length < requiredMin) {
+      if (turnover) return
+      setCheckIn(day)
+      setCheckOut(null)
+      return
+    }
+
+    setCheckOut(day)
   }
 
   const clearDates = () => {
@@ -290,6 +293,7 @@ export default function Calendar({
                 const ci = isCheckIn(day)
                 const co = isCheckOut(day)
                 const inRange = isInRange(day)
+                const checkoutOnly = isCheckoutOnly(day)
                 const isCurrentMonth = !!monthStart && !!monthEnd && day >= monthStart && day <= monthEnd
 
                 let cellClass = 'aspect-square flex items-center justify-center text-base font-medium transition-all select-none '
@@ -302,6 +306,8 @@ export default function Calendar({
                   cellClass += 'bg-luxury-gold/20 text-luxury-dark rounded-lg cursor-pointer '
                 } else if (past || tooSoon || tooFar) {
                   cellClass += 'bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed '
+                } else if (checkoutOnly) {
+                  cellClass += 'bg-green-50 text-green-800 rounded-lg cursor-pointer ring-2 ring-inset ring-luxury-gold hover:bg-luxury-gold/30 hover:text-luxury-dark '
                 } else if (blocked) {
                   cellClass += 'bg-red-100 text-red-600 rounded-lg line-through cursor-not-allowed '
                 } else if (available) {
@@ -317,7 +323,7 @@ export default function Calendar({
                     key={day.toString()}
                     className={cellClass}
                     onClick={() => handleDayClick(day)}
-                    title={blocked ? 'Booked' : past ? 'Past' : tooSoon ? `${MIN_ADVANCE_DAYS} days notice required` : tooFar ? 'Beyond booking window' : available ? 'Available' : ''}
+                    title={ci ? 'Check-in' : co ? 'Check-out' : checkoutOnly ? 'Checkout morning only — booked from the afternoon' : blocked ? 'Booked' : past ? 'Past' : tooSoon ? `${MIN_ADVANCE_DAYS} days notice required` : tooFar ? 'Beyond booking window' : available ? 'Available' : ''}
                   >
                     {format(day, 'd')}
                   </div>
@@ -331,6 +337,12 @@ export default function Calendar({
                 <div className="w-3.5 h-3.5 rounded bg-green-50 border border-green-300" />
                 <span className="text-gray-600">Available</span>
               </div>
+              {checkIn && !checkOut && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded bg-green-50 border-2 border-luxury-gold" />
+                  <span className="text-gray-600">Checkout only</span>
+                </div>
+              )}
               <div className="flex items-center gap-1.5">
                 <div className="w-3.5 h-3.5 rounded bg-luxury-gold" />
                 <span className="text-gray-600">Selected</span>

@@ -57,10 +57,10 @@ async function parseICalFeed(icalUrl: string, australianTimezone: string): Promi
       const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number)
       const checkOut = new Date(Date.UTC(endYear, endMonth - 1, endDay))
       
-      // In iCal format, endDate is typically exclusive (represents the day after check-out)
-      // So if check-in is Jan 5 and check-out is Jan 10, the event is Jan 5-11 (exclusive)
-      // We need to block Jan 5-10 (check-in to check-out inclusive)
-      // Subtract 1 day from checkOut since it's exclusive
+      // VALUE=DATE end dates are exclusive and are the checkout morning.
+      // A guest who checks in on 18 Jan and out on 27 Jan occupies the nights
+      // of 18–26 Jan. Block those nights only. The 27th stays open for the next
+      // arrival, and the 18th stays selectable as the previous guest's checkout.
       const blockEndDate = new Date(checkOut)
       blockEndDate.setUTCDate(blockEndDate.getUTCDate() - 1)
       

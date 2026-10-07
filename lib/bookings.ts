@@ -15,6 +15,7 @@ import type {
 import { getSiteUrl } from '@/lib/site'
 import { sendBookingRecoveryEmail } from '@/lib/email'
 import { MIN_ADVANCE_DAYS, MAX_OCCUPANCY, earliestCheckInStr, latestCheckInStr, MAX_BOOKING_HORIZON_MONTHS } from '@/lib/booking-window'
+import { nightDates } from '@/lib/stay-nights'
 
 export const PROPERTY_ID = 'maxentertain'
 export const PENDING_HOLD_MINUTES = 30
@@ -55,31 +56,15 @@ export interface CreatePendingBookingInput {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 let indexesEnsured = false
 
-function toUtcDate(dateStr: string) {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, day))
-}
-
-function dateToStr(date: Date) {
-  return date.toISOString().slice(0, 10)
-}
-
 export function getNightDates(checkIn: string, checkOut: string) {
   if (!DATE_RE.test(checkIn) || !DATE_RE.test(checkOut)) {
     throw new BookingValidationError('Dates must use YYYY-MM-DD format')
   }
-
-  const start = toUtcDate(checkIn)
-  const endExclusive = toUtcDate(checkOut)
-  if (start >= endExclusive) {
+  if (checkOut <= checkIn) {
     throw new BookingValidationError('Check-out must be after check-in')
   }
 
-  const dates: string[] = []
-  for (const cur = new Date(start); cur < endExclusive; cur.setUTCDate(cur.getUTCDate() + 1)) {
-    dates.push(dateToStr(cur))
-  }
-  return dates
+  return nightDates(checkIn, checkOut)
 }
 
 function cleanGuestField(value: unknown, maxLength: number): string {

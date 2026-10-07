@@ -6,6 +6,7 @@ import { propertyConfig } from '@/config/property'
 import { useAvailability } from '@/hooks/useAvailability'
 import DatePicker from '@/components/DatePicker'
 import { trackClick } from '@/lib/analytics'
+import { nightsIncludeBlocked } from '@/lib/stay-nights'
 
 interface FormData {
   name: string
@@ -76,29 +77,14 @@ export default function InquiryForm({
     return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1))
   }
 
-  const utcDateToDateStr = (date: Date) => {
-    const y = date.getUTCFullYear()
-    const m = String(date.getUTCMonth() + 1).padStart(2, '0')
-    const d = String(date.getUTCDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
-  }
-
   const nightsBetween = (checkIn: string, checkOut: string) => {
     const a = dateStrToUtcDate(checkIn).getTime()
     const b = dateStrToUtcDate(checkOut).getTime()
     return Math.round((b - a) / 86400000)
   }
 
-  const isRangeAvailable = (checkIn: string, checkOut: string) => {
-    // Treat checkout as exclusive. Validate all nights from check-in up to (check-out - 1).
-    const start = dateStrToUtcDate(checkIn)
-    const endExclusive = dateStrToUtcDate(checkOut)
-    for (let cur = new Date(start); cur < endExclusive; cur.setUTCDate(cur.getUTCDate() + 1)) {
-      const curStr = utcDateToDateStr(cur)
-      if (blockedSet.has(curStr)) return false
-    }
-    return true
-  }
+  const isRangeAvailable = (checkIn: string, checkOut: string) =>
+    !nightsIncludeBlocked(checkIn, checkOut, blockedSet)
 
   const formatPhoneNumber = (value: string): string => {
     // Remove all non-digit characters except +
@@ -427,6 +413,7 @@ export default function InquiryForm({
                       blockedSet={blockedSet}
                       minDateStr={formData.checkIn || todayStr}
                       minExclusive={Boolean(formData.checkIn)}
+                      checkoutCheckIn={formData.checkIn || undefined}
                       error={errors.checkOut}
                       disabled={availability.isLoading || !formData.checkIn}
                       forceDarkText={isGlass}
@@ -435,7 +422,7 @@ export default function InquiryForm({
                 </div>
 
                 <p className={`text-sm md:text-base ${isGlass ? 'text-white/55' : 'text-gray-600'}`}>
-                  Dates are validated against live availability. Unavailable dates are disabled.
+                  Dates are validated against live availability. You can check out on the morning another guest arrives.
                 </p>
 
                 <div>
