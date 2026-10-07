@@ -9,8 +9,8 @@ import {
   markCommsEventSent,
 } from '@/lib/bookings'
 import { computeRefund } from '@/lib/cancellation'
-import { getStripe } from '@/lib/stripe'
 import { sendBookingCancelledEmail, sendOwnerCancellationAlert } from '@/lib/email'
+import { refundBookingPayments } from '@/lib/refunds'
 
 export const runtime = 'nodejs'
 
@@ -37,24 +37,17 @@ export async function POST(req: NextRequest) {
     let refundStripeId: string | undefined
 
     if (refund.refundAud > 0) {
-      if (!booking.payment.stripePaymentIntentId) {
+      if (!booking.payments?.length && !booking.payment.stripePaymentIntentId) {
         await failCancellation(booking._id, 'Payment intent missing; manual refund required')
         return NextResponse.json({ error: 'Payment intent missing; manual refund required' }, { status: 409 })
       }
 
       try {
-        const stripeRefund = await getStripe().refunds.create(
-          {
-            payment_intent: booking.payment.stripePaymentIntentId,
-            amount: refund.refundAud * 100,
-            metadata: {
-              bookingId: booking._id,
-              policyApplied: refund.policyApplied,
-            },
-          },
-          { idempotencyKey: `cancel-refund-${booking._id}` }
-        )
-        refundStripeId = stripeRefund.id
+        const result = await refundBookingPayments(booking, refund.refundAud, {
+          idempotencyPrefix: `cancel-refund-${booking._id}`,
+          metadata: { policyApplied: refund.policyApplied },
+        })
+        refundStripeId = result.refundIds.join(',')
       } catch (error) {
         await failCancellation(booking._id, error instanceof Error ? error.message : 'Stripe refund failed')
         throw error

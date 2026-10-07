@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cleanupExpiredPendingBookings } from '@/lib/bookings'
+import { cleanupExpiredOffers } from '@/lib/offers'
 
 export const runtime = 'nodejs'
 
@@ -17,6 +18,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const expiredCount = await cleanupExpiredPendingBookings()
-  return NextResponse.json({ ok: true, expiredCount })
+  const [expiredCount, expiredOfferCount] = await Promise.all([
+    cleanupExpiredPendingBookings(),
+    cleanupExpiredOffers(),
+  ])
+  return NextResponse.json({ ok: true, expiredCount, expiredOfferCount })
 }

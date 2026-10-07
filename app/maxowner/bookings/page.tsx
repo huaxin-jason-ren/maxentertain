@@ -93,6 +93,9 @@ export default function OwnerBookingsPage() {
   const [openBookingId, setOpenBookingId] = useState<string | null>(null)
   const [openArrivalId, setOpenArrivalId] = useState<string | null>(null)
   const [arrivalDraft, setArrivalDraft] = useState<Record<string, { details: string; passcode: string }>>({})
+  const [openExtensionId, setOpenExtensionId] = useState<string | null>(null)
+  const [extensionDraft, setExtensionDraft] = useState<Record<string, { checkOut: string; revisedTotalAud: string; note: string }>>({})
+  const [extensionPreview, setExtensionPreview] = useState<Record<string, { automaticRevisedTotalAud: number; adjustmentAud: number; addedDates: string[]; removedDates: string[] }>>({})
   const [commsByBooking, setCommsByBooking] = useState<Record<string, CommsItem[]>>({})
   const [openCommsId, setOpenCommsId] = useState<string | null>(null)
   const [health, setHealth] = useState<Record<string, boolean> | null>(null)
@@ -158,6 +161,55 @@ export default function OwnerBookingsPage() {
       'Arrival details saved.'
     )
     setOpenArrivalId(null)
+  }
+
+  const toggleExtension = (booking: BookingRecord) => {
+    setOpenExtensionId((current) => current === booking._id ? null : booking._id)
+    setExtensionDraft((current) => current[booking._id] ? current : {
+      ...current,
+      [booking._id]: { checkOut: '', revisedTotalAud: '', note: '' },
+    })
+  }
+
+  const previewExtension = async (booking: BookingRecord) => {
+    const draft = extensionDraft[booking._id]
+    if (!draft?.checkOut) return
+    setMessage('')
+    const response = await fetch(`/api/maxowner/offers?bookingId=${encodeURIComponent(booking._id)}&checkOut=${encodeURIComponent(draft.checkOut)}`)
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      setMessage(data.error ?? 'Could not calculate the amendment.')
+      return
+    }
+    setExtensionPreview((current) => ({ ...current, [booking._id]: data.preview }))
+    setExtensionDraft((current) => ({
+      ...current,
+      [booking._id]: {
+        ...current[booking._id],
+        revisedTotalAud: String(data.preview.automaticRevisedTotalAud),
+      },
+    }))
+  }
+
+  const sendExtensionOffer = async (booking: BookingRecord) => {
+    const draft = extensionDraft[booking._id]
+    setMessage('')
+    const response = await fetch('/api/maxowner/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create',
+        kind: 'extension',
+        bookingId: booking._id,
+        checkOut: draft?.checkOut,
+        revisedTotalAud: Number(draft?.revisedTotalAud),
+        note: draft?.note,
+        inclusions: 'Booking date amendment, Victorian short-stay levy and payment processing',
+      }),
+    })
+    const data = await response.json().catch(() => ({}))
+    setMessage(response.ok ? 'Amendment offer sent. Any added dates are held for 24 hours.' : data.error ?? 'Could not send amendment offer.')
+    if (response.ok) setOpenExtensionId(null)
   }
 
   const loadComms = async (bookingId: string) => {
@@ -293,6 +345,14 @@ export default function OwnerBookingsPage() {
                       className="rounded-lg border border-luxury-gold/40 px-3 py-2 text-xs font-semibold text-luxury-gold hover:bg-luxury-gold/10"
                     >
                       Resend confirmation
+                    </button>
+                  ) : null}
+                  {booking.status === 'confirmed' ? (
+                    <button
+                      onClick={() => toggleExtension(booking)}
+                      className="rounded-lg border border-luxury-gold/40 px-3 py-2 text-xs font-semibold text-luxury-gold hover:bg-luxury-gold/10"
+                    >
+                      {openExtensionId === booking._id ? 'Close amendment' : 'Change dates / price'}
                     </button>
                   ) : null}
                   {booking.status === 'confirmed' ? (
@@ -445,6 +505,54 @@ export default function OwnerBookingsPage() {
                     >
                       Cancel
                     </button>
+                  </div>
+                </div>
+              ) : null}
+              {openExtensionId === booking._id ? (
+                <div className="mt-5 border-t border-white/10 pt-4">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Stay price amendment</p>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Current checkout is {booking.checkOut} and current total is ${booking.pricing.totalAud.toLocaleString()}. Added nights use current rates; removed nights use their originally paid rates.
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="text-xs text-gray-400">
+                      New checkout date
+                      <input type="date" min={booking.checkIn} value={extensionDraft[booking._id]?.checkOut ?? ''} onChange={(event) => {
+                        setExtensionDraft((current) => ({ ...current, [booking._id]: { ...current[booking._id], checkOut: event.target.value, revisedTotalAud: '' } }))
+                        setExtensionPreview((current) => {
+                          const next = { ...current }
+                          delete next[booking._id]
+                          return next
+                        })
+                      }} className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white" />
+                    </label>
+                    <label className="text-xs text-gray-400">
+                      Revised booking total (AUD)
+                      <input type="number" min={booking.pricing.petFeeAud} value={extensionDraft[booking._id]?.revisedTotalAud ?? ''} onChange={(event) => setExtensionDraft((current) => ({ ...current, [booking._id]: { ...current[booking._id], revisedTotalAud: event.target.value } }))} className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white" />
+                    </label>
+                    {extensionPreview[booking._id] ? (
+                      <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-xs text-gray-300 md:col-span-2">
+                        <p>Existing total: <strong>${booking.pricing.totalAud.toLocaleString()}</strong></p>
+                        <p>Automatic revised total: <strong>${extensionPreview[booking._id].automaticRevisedTotalAud.toLocaleString()}</strong></p>
+                        <p className={Number(extensionDraft[booking._id]?.revisedTotalAud) - booking.pricing.totalAud < 0 ? 'text-green-300' : 'text-yellow-300'}>
+                          {Number(extensionDraft[booking._id]?.revisedTotalAud) - booking.pricing.totalAud > 0
+                            ? `Guest pays $${(Number(extensionDraft[booking._id]?.revisedTotalAud) - booking.pricing.totalAud).toLocaleString()}`
+                            : Number(extensionDraft[booking._id]?.revisedTotalAud) - booking.pricing.totalAud < 0
+                              ? `Guest receives $${Math.abs(Number(extensionDraft[booking._id]?.revisedTotalAud) - booking.pricing.totalAud).toLocaleString()} refund`
+                              : 'No payment or refund required'}
+                        </p>
+                        <p className="mt-1 text-gray-500">{extensionPreview[booking._id].addedDates.length} night(s) added · {extensionPreview[booking._id].removedDates.length} night(s) removed</p>
+                      </div>
+                    ) : null}
+                    <label className="text-xs text-gray-400 md:col-span-2">
+                      Note from Jason
+                      <textarea rows={2} value={extensionDraft[booking._id]?.note ?? ''} onChange={(event) => setExtensionDraft((current) => ({ ...current, [booking._id]: { ...current[booking._id], note: event.target.value } }))} className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white" />
+                    </label>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button disabled={!extensionDraft[booking._id]?.checkOut} onClick={() => previewExtension(booking)} className="rounded-lg border border-white/20 px-4 py-2 text-xs text-gray-200 disabled:opacity-50">Calculate difference</button>
+                    <button disabled={!extensionPreview[booking._id] || !extensionDraft[booking._id]?.revisedTotalAud} onClick={() => sendExtensionOffer(booking)} className="rounded-lg bg-luxury-gold px-4 py-2 text-xs font-semibold text-black disabled:opacity-50">Reserve and email amendment</button>
+                    <button onClick={() => setOpenExtensionId(null)} className="rounded-lg border border-white/10 px-4 py-2 text-xs text-gray-400">Cancel</button>
                   </div>
                 </div>
               ) : null}

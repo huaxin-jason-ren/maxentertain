@@ -12,7 +12,20 @@ import {
   recordStripeEventIfNew,
 } from '@/lib/bookings'
 import { getStripe, getStripeWebhookSecret } from '@/lib/stripe'
-import { sendBookingConfirmedEmail, sendOwnerBookingAlert, sendOwnerPaymentIssueAlert } from '@/lib/email'
+import {
+  sendBookingConfirmedEmail,
+  sendBookingExtendedEmail,
+  sendOwnerBookingAlert,
+  sendOwnerExtensionAlert,
+  sendOwnerPaymentIssueAlert,
+} from '@/lib/email'
+import {
+  confirmOfferPayment,
+  expireOffer,
+  getOfferById,
+  hasActiveOfferLocks,
+  markOfferPaymentOrphaned,
+} from '@/lib/offers'
 
 export const runtime = 'nodejs'
 
@@ -89,6 +102,61 @@ export async function POST(req: NextRequest) {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
+      const offerId = session.metadata?.offerId
+
+      if (offerId) {
+        if (session.payment_status !== 'paid') {
+          throw new Error(`Offer checkout session ${session.id} is not paid (status=${session.payment_status})`)
+        }
+        const payment = await buildPaymentDetails(session)
+        const offer = await getOfferById(offerId)
+        if (!offer) throw new Error(`Offer ${offerId} not found for completed checkout`)
+
+        const reason =
+          offer.stripeSessionId !== session.id
+            ? 'Stripe session does not match the active offer checkout'
+            : typeof session.amount_total === 'number' && session.amount_total !== offer.amountDueAud * 100
+              ? `Paid amount ${session.amount_total} does not match offer amount ${offer.amountDueAud * 100}`
+              : !offer.agreement
+                ? 'Offer terms were not accepted'
+                : !(await hasActiveOfferLocks(offer))
+                  ? 'Offer reservation expired before payment completed'
+                  : null
+
+        if (reason) {
+          await markOfferPaymentOrphaned(offerId, payment, reason)
+          if (payment.stripePaymentIntentId) {
+            await stripe.refunds.create(
+              {
+                payment_intent: payment.stripePaymentIntentId,
+                metadata: { offerId, reason: 'orphaned_offer_payment' },
+              },
+              { idempotencyKey: `orphan-offer-refund-${offerId}` }
+            )
+          }
+          if (offer.bookingId) {
+            const original = await getBookingById(offer.bookingId)
+            if (original) await sendOwnerPaymentIssueAlert(original, reason)
+          }
+          return NextResponse.json({ received: true, orphaned: true })
+        }
+
+        const result = await confirmOfferPayment(offerId, payment)
+        if (!result.booking) throw new Error(`Offer ${offerId} paid without a resulting booking`)
+        if (offer.kind === 'extension') {
+          await Promise.all([
+            sendBookingExtendedEmail(result.booking, offer.amountDueAud),
+            sendOwnerExtensionAlert(result.booking, offer.amountDueAud),
+          ])
+        } else {
+          await Promise.all([
+            sendBookingConfirmedEmail(result.booking),
+            sendOwnerBookingAlert(result.booking),
+          ])
+        }
+        return NextResponse.json({ received: true })
+      }
+
       const bookingId = session.metadata?.bookingId
       if (!bookingId) throw new Error('Missing bookingId in Stripe metadata')
 
@@ -164,6 +232,11 @@ export async function POST(req: NextRequest) {
 
     if (event.type === 'checkout.session.expired') {
       const session = event.data.object as Stripe.Checkout.Session
+      const offerId = session.metadata?.offerId
+      if (offerId) {
+        await expireOffer(offerId, 'stripe_checkout_expired')
+        return NextResponse.json({ received: true })
+      }
       const bookingId = session.metadata?.bookingId
       if (bookingId) {
         await expireBooking(bookingId, 'stripe_checkout_expired')
@@ -172,6 +245,11 @@ export async function POST(req: NextRequest) {
 
     if (event.type === 'payment_intent.payment_failed') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent
+      const offerId = paymentIntent.metadata?.offerId
+      if (offerId) {
+        await expireOffer(offerId, 'payment_failed')
+        return NextResponse.json({ received: true })
+      }
       const bookingId = paymentIntent.metadata?.bookingId
       if (bookingId) await expireBooking(bookingId, 'payment_failed')
     }

@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import { propertyConfig } from '@/config/property'
 import { BOND_AMOUNT_AUD } from '@/lib/pricing'
-import type { BookingRecord, GuestRecord } from '@/types/booking'
+import type { BookingRecord, GuestRecord, SpecialOfferRecord } from '@/types/booking'
 
 const PRE_STAY_SUBJECTS: Record<number, string> = {
   14: 'Your MAX Entertain stay is in two weeks',
@@ -577,6 +577,166 @@ export async function sendReturningGuestOfferEmail(guest: GuestRecord, campaign:
       `We would love to welcome you back to ${propertyConfig.name} for ${campaign.label}.`,
       'Reply to this email before booking and Jason can confirm the best direct-booking option for your dates.',
       'Book direct at maxentertain.com to avoid OTA service fees.',
+    ].join('\n'),
+  })
+}
+
+export async function sendSpecialOfferEmail(offer: SpecialOfferRecord, token: string) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? process.env.SITE_URL ?? 'https://maxentertain.com'
+  const offerUrl = `${baseUrl}/offer/${encodeURIComponent(token)}`
+  const guestName = escapeHtml(offer.guest.name)
+  const propertyName = escapeHtml(propertyConfig.name)
+  const expiry = offer.expiresAt.toLocaleString('en-AU', {
+    timeZone: 'Australia/Melbourne',
+    dateStyle: 'full',
+    timeStyle: 'short',
+  })
+  const heading = offer.kind === 'extension' ? 'Your stay amendment offer' : 'Your special stay offer'
+  const priceLines =
+    offer.kind === 'extension'
+      ? `
+        <p><strong>Current booking total:</strong> ${money(offer.originalTotalAud)}</p>
+        <p><strong>Revised booking total:</strong> ${money(offer.pricing.totalAud)}</p>
+        ${offer.amountDueAud > 0 ? `<p><strong>Additional amount due:</strong> ${money(offer.amountDueAud)}</p>` : ''}
+        ${(offer.refundDueAud ?? 0) > 0 ? `<p><strong>Refund after acceptance:</strong> ${money(offer.refundDueAud ?? 0)}</p>` : ''}
+        ${offer.amountDueAud === 0 && !offer.refundDueAud ? '<p><strong>No payment or refund required.</strong></p>' : ''}
+      `
+      : `<p><strong>Special offer total:</strong> ${money(offer.amountDueAud)} AUD, all fees included</p>`
+
+  return sendEmail({
+    to: offer.guest.email,
+    subject:
+      offer.kind === 'extension'
+        ? `Stay amendment: ${offer.checkIn} to ${offer.checkOut}`
+        : `Special offer: ${offer.checkIn} to ${offer.checkOut}`,
+    html: `
+      <h2>${heading}</h2>
+      <p>Hi ${guestName},</p>
+      <p>Jason has prepared this private offer for your stay at ${propertyName}.</p>
+      <p><strong>Dates:</strong> ${escapeHtml(offer.checkIn)} to ${escapeHtml(offer.checkOut)} (${offer.nights} nights)</p>
+      <p><strong>Guests:</strong> ${offer.guest.guests}</p>
+      <p><strong>Check-in:</strong> ${escapeHtml(propertyConfig.policies.checkIn)}</p>
+      <p><strong>Check-out:</strong> ${escapeHtml(propertyConfig.policies.checkOut)}</p>
+      ${priceLines}
+      ${offer.inclusions ? `<p><strong>Included:</strong> ${escapeHtml(offer.inclusions).replace(/\n/g, '<br>')}</p>` : ''}
+      ${offer.note ? `<p><strong>Note from Jason:</strong> ${escapeHtml(offer.note).replace(/\n/g, '<br>')}</p>` : ''}
+      <p><strong>Your dates are reserved until ${escapeHtml(expiry)} Melbourne time.</strong></p>
+      <p style="margin:24px 0">
+        <a href="${escapeHtml(offerUrl)}" style="background:#D4AF37;color:#111;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">Review and accept offer</a>
+      </p>
+      <p style="color:#666;font-size:13px">The amendment or reservation expires automatically if it is not accepted and completed before expiry. House rules and the cancellation policy are shown before confirmation.</p>
+    `,
+    text: [
+      heading,
+      `Hi ${offer.guest.name},`,
+      `Dates: ${offer.checkIn} to ${offer.checkOut} (${offer.nights} nights)`,
+      `Guests: ${offer.guest.guests}`,
+      offer.kind === 'extension' ? `Current total: ${money(offer.originalTotalAud)}` : '',
+      offer.kind === 'extension' ? `Revised total: ${money(offer.pricing.totalAud)}` : '',
+      offer.kind === 'extension' && offer.amountDueAud > 0 ? `Additional amount due: ${money(offer.amountDueAud)}` : '',
+      offer.kind === 'extension' && (offer.refundDueAud ?? 0) > 0 ? `Refund after acceptance: ${money(offer.refundDueAud ?? 0)}` : '',
+      offer.kind === 'new_booking' ? `Special offer total: ${money(offer.amountDueAud)} AUD` : '',
+      offer.inclusions ? `Included: ${offer.inclusions}` : '',
+      offer.note ? `Note from Jason: ${offer.note}` : '',
+      `Reserved until: ${expiry} Melbourne time`,
+      `Review and accept: ${offerUrl}`,
+    ].filter(Boolean).join('\n'),
+  })
+}
+
+export async function sendBookingExtendedEmail(booking: BookingRecord, amountPaidAud: number) {
+  return sendEmail({
+    to: booking.guest.email,
+    subject: `Extra night confirmed: checkout ${booking.checkOut}`,
+    html: `
+      <h2>Your booking has been extended</h2>
+      <p>Hi ${escapeHtml(booking.guest.name)},</p>
+      <p>Your extra-night payment has been received and your stay at ${escapeHtml(propertyConfig.name)} is updated.</p>
+      <p><strong>Revised dates:</strong> ${escapeHtml(dateRangeLine(booking))}</p>
+      <p><strong>Additional amount paid:</strong> ${money(amountPaidAud)}</p>
+      <p><strong>Revised booking total:</strong> ${money(booking.pricing.totalAud)}</p>
+      <p>All future arrival and checkout messages will use the revised dates.</p>
+    `,
+    text: [
+      `Hi ${booking.guest.name},`,
+      'Your booking has been extended.',
+      `Revised dates: ${dateRangeLine(booking)}`,
+      `Additional amount paid: ${money(amountPaidAud)}`,
+      `Revised booking total: ${money(booking.pricing.totalAud)}`,
+    ].join('\n'),
+  })
+}
+
+export async function sendOwnerExtensionAlert(booking: BookingRecord, amountPaidAud: number) {
+  return sendEmail({
+    to: getOwnerEmail(),
+    subject: `Booking extended: ${booking.guest.name} to ${booking.checkOut}`,
+    html: `
+      <h2>Paid booking extension confirmed</h2>
+      <p><strong>Guest:</strong> ${escapeHtml(booking.guest.name)} (${escapeHtml(booking.guest.email)})</p>
+      <p><strong>Revised dates:</strong> ${escapeHtml(dateRangeLine(booking))}</p>
+      <p><strong>Additional payment:</strong> ${money(amountPaidAud)}</p>
+      <p><strong>Revised booking total:</strong> ${money(booking.pricing.totalAud)}</p>
+    `,
+    text: [
+      'Paid booking extension confirmed',
+      `Guest: ${booking.guest.name} (${booking.guest.email})`,
+      `Revised dates: ${dateRangeLine(booking)}`,
+      `Additional payment: ${money(amountPaidAud)}`,
+      `Revised booking total: ${money(booking.pricing.totalAud)}`,
+    ].join('\n'),
+  })
+}
+
+export async function sendBookingAmendedEmail(
+  booking: BookingRecord,
+  change: { previousTotalAud: number; refundAud: number }
+) {
+  return sendEmail({
+    to: booking.guest.email,
+    subject: `Booking amendment confirmed: checkout ${booking.checkOut}`,
+    html: `
+      <h2>Your booking has been updated</h2>
+      <p>Hi ${escapeHtml(booking.guest.name)},</p>
+      <p><strong>Revised dates:</strong> ${escapeHtml(dateRangeLine(booking))}</p>
+      <p><strong>Previous total:</strong> ${money(change.previousTotalAud)}</p>
+      <p><strong>Revised total:</strong> ${money(booking.pricing.totalAud)}</p>
+      ${change.refundAud > 0 ? `<p><strong>Refund issued:</strong> ${money(change.refundAud)}</p><p>Your bank may take several business days to display the refund.</p>` : '<p>No additional payment or refund was required.</p>'}
+      <p>All future arrival and checkout messages will use the revised dates.</p>
+    `,
+    text: [
+      `Hi ${booking.guest.name},`,
+      'Your booking has been updated.',
+      `Revised dates: ${dateRangeLine(booking)}`,
+      `Previous total: ${money(change.previousTotalAud)}`,
+      `Revised total: ${money(booking.pricing.totalAud)}`,
+      change.refundAud > 0 ? `Refund issued: ${money(change.refundAud)}` : 'No additional payment or refund was required.',
+    ].join('\n'),
+  })
+}
+
+export async function sendOwnerAmendmentAlert(
+  booking: BookingRecord,
+  change: { previousTotalAud: number; refundAud: number }
+) {
+  return sendEmail({
+    to: getOwnerEmail(),
+    subject: `Booking amendment confirmed: ${booking.guest.name} to ${booking.checkOut}`,
+    html: `
+      <h2>Booking amendment confirmed</h2>
+      <p><strong>Guest:</strong> ${escapeHtml(booking.guest.name)} (${escapeHtml(booking.guest.email)})</p>
+      <p><strong>Revised dates:</strong> ${escapeHtml(dateRangeLine(booking))}</p>
+      <p><strong>Previous total:</strong> ${money(change.previousTotalAud)}</p>
+      <p><strong>Revised total:</strong> ${money(booking.pricing.totalAud)}</p>
+      <p><strong>Refund:</strong> ${money(change.refundAud)}</p>
+    `,
+    text: [
+      'Booking amendment confirmed',
+      `Guest: ${booking.guest.name} (${booking.guest.email})`,
+      `Revised dates: ${dateRangeLine(booking)}`,
+      `Previous total: ${money(change.previousTotalAud)}`,
+      `Revised total: ${money(booking.pricing.totalAud)}`,
+      `Refund: ${money(change.refundAud)}`,
     ].join('\n'),
   })
 }

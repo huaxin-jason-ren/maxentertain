@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'crypto'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
-import type { BookingRecord, BookingStatus } from '@/types/booking'
+import type { BookingRecord, BookingStatus, SpecialOfferRecord } from '@/types/booking'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -39,19 +39,32 @@ export async function GET(req: Request) {
 
   const db = await getDb()
   const nowDate = new Date()
-  const bookings = await db
-    .collection<BookingRecord>('bookings')
-    .find(
-      {
-        $or: [
-          { status: 'confirmed' },
-          { status: 'pending_payment', expiresAt: { $gt: nowDate } },
-        ],
-      },
-      { projection: { _id: 1, checkIn: 1, checkOut: 1, status: 1, updatedAt: 1, createdAt: 1 } }
-    )
-    .sort({ checkIn: 1 })
-    .toArray()
+  const [bookings, offers] = await Promise.all([
+    db
+      .collection<BookingRecord>('bookings')
+      .find(
+        {
+          $or: [
+            { status: 'confirmed' },
+            { status: 'pending_payment', expiresAt: { $gt: nowDate } },
+          ],
+        },
+        { projection: { _id: 1, checkIn: 1, checkOut: 1, status: 1, updatedAt: 1, createdAt: 1 } }
+      )
+      .sort({ checkIn: 1 })
+      .toArray(),
+    db
+      .collection<SpecialOfferRecord>('offers')
+      .find(
+        {
+          status: { $in: ['sent', 'accepted', 'checkout_pending'] },
+          expiresAt: { $gt: nowDate },
+        },
+        { projection: { _id: 1, checkIn: 1, checkOut: 1, updatedAt: 1, createdAt: 1 } }
+      )
+      .sort({ checkIn: 1 })
+      .toArray(),
+  ])
 
   const now = formatICalDateTime()
   const events = bookings.flatMap((booking) => {
@@ -71,6 +84,19 @@ export async function GET(req: Request) {
       'END:VEVENT',
     ]
   })
+  const offerEvents = offers.flatMap((offer) => [
+    'BEGIN:VEVENT',
+    `UID:maxentertain-offer-${offer._id}@maxentertain.com`,
+    `DTSTAMP:${now}`,
+    `DTSTART;VALUE=DATE:${formatICalDate(offer.checkIn)}`,
+    `DTEND;VALUE=DATE:${formatICalDate(offer.checkOut)}`,
+    `SUMMARY:${escapeICal('Special offer hold')} - MAX Entertain`,
+    'STATUS:TENTATIVE',
+    'TRANSP:OPAQUE',
+    'DESCRIPTION:24-hour special offer hold',
+    `LAST-MODIFIED:${formatICalDateTime(offer.updatedAt ?? offer.createdAt ?? new Date())}`,
+    'END:VEVENT',
+  ])
 
   const body = [
     'BEGIN:VCALENDAR',
@@ -80,6 +106,7 @@ export async function GET(req: Request) {
     'METHOD:PUBLISH',
     'X-WR-CALNAME:MAX Entertain Direct Bookings',
     ...events,
+    ...offerEvents,
     'END:VCALENDAR',
     '',
   ].join('\r\n')

@@ -6,6 +6,7 @@ import type {
   BookingGroupType,
   BookingGuest,
   BookingPayment,
+  BookingPaymentTransaction,
   BookingPricing,
   BookingRecord,
   BookingStatus,
@@ -238,7 +239,7 @@ export async function cleanupExpiredPendingBookings() {
           as: 'booking',
         },
       },
-      { $match: { booking: { $size: 0 } } },
+      { $match: { booking: { $size: 0 }, offerId: { $exists: false } } },
       { $group: { _id: '$bookingId' } },
     ])
     .toArray()
@@ -376,12 +377,20 @@ export async function confirmBookingPayment(bookingId: string, payment: BookingP
   await ensureBookingIndexes(db)
   const now = new Date()
   const existing = await getBookingById(bookingId)
+  const paymentTransaction: BookingPaymentTransaction | null = existing
+    ? {
+        ...payment,
+        id: payment.stripePaymentIntentId ?? payment.stripeSessionId ?? bookingId,
+        kind: 'booking',
+        amountAud: existing.pricing.totalAud,
+      }
+    : null
 
   // Idempotent re-delivery: already confirmed — refresh payment details only.
   if (existing?.status === 'confirmed') {
     await db.collection<BookingRecord>('bookings').updateOne(
       { _id: bookingId, status: 'confirmed' },
-      { $set: { payment, updatedAt: now } }
+      { $set: { payment, ...(existing.payments?.length ? {} : paymentTransaction ? { payments: [paymentTransaction] } : {}), updatedAt: now } }
     )
     await db.collection('booking_locks').updateMany(
       { bookingId, status: { $in: ['pending_payment', 'confirmed'] } },
@@ -402,6 +411,7 @@ export async function confirmBookingPayment(bookingId: string, payment: BookingP
       $set: {
         status: 'confirmed',
         payment,
+        ...(paymentTransaction ? { payments: [paymentTransaction] } : {}),
         confirmedAt: now,
         updatedAt: now,
       },
@@ -650,6 +660,7 @@ export async function getActiveBookingLockDates() {
         $or: [
           { status: 'confirmed' },
           { status: 'pending_payment', expiresAt: { $gt: now } },
+          { status: 'offer_hold', expiresAt: { $gt: now } },
         ],
       },
       { projection: { _id: 0, date: 1 } }

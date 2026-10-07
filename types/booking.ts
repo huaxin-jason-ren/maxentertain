@@ -54,6 +54,15 @@ export interface BookingPayment {
   paidAt?: Date
 }
 
+export interface BookingPaymentTransaction extends BookingPayment {
+  id: string
+  kind: 'booking' | 'extension'
+  amountAud: number
+  offerId?: string
+  refundedAud?: number
+  refundIds?: string[]
+}
+
 export type BondStatus = 'none' | 'authorized' | 'released' | 'captured' | 'failed'
 
 export interface BookingBond {
@@ -105,8 +114,10 @@ export interface BookingRecord {
   nights: number
   pricing: BookingPricing
   payment: BookingPayment
+  /** All successful charges. Legacy bookings may only have `payment`. */
+  payments?: BookingPaymentTransaction[]
   stripeSessionId?: string
-  source: 'direct'
+  source: 'direct' | 'offer'
   rulesAccepted: boolean
   cancellationToken: string
   cancelReason?: string
@@ -122,6 +133,74 @@ export interface BookingRecord {
   arrival?: BookingArrival
   agreement?: BookingAgreement
   bond?: BookingBond
+}
+
+export type OfferKind = 'new_booking' | 'extension'
+export type OfferStatus =
+  | 'sent'
+  | 'accepted'
+  | 'checkout_pending'
+  | 'paid'
+  | 'completed'
+  | 'expired'
+  | 'revoked'
+  | 'payment_orphaned'
+
+export interface SpecialOfferRecord {
+  _id: string
+  propertyId: string
+  kind: OfferKind
+  status: OfferStatus
+  tokenHash: string
+  inquiryId?: string
+  bookingId?: string
+  guest: BookingGuest
+  checkIn: string
+  checkOut: string
+  previousCheckOut?: string
+  nights: number
+  /** All nights for a new stay; only the added nights for an extension. */
+  heldDates: string[]
+  pricing: BookingPricing
+  /** Current total before an extension; zero for a new booking offer. */
+  originalTotalAud: number
+  /** Amount charged by this offer. */
+  amountDueAud: number
+  /** Amount returned when the revised booking total is lower. */
+  refundDueAud?: number
+  note?: string
+  inclusions?: string
+  expiresAt: Date
+  acceptedAt?: Date
+  agreement?: BookingAgreement
+  stripeSessionId?: string
+  checkoutExpiresAt?: Date
+  payment?: BookingPayment
+  refundIds?: string[]
+  emailSentAt?: Date
+  emailError?: string
+  paidAt?: Date
+  revokedAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PublicSpecialOffer {
+  kind: OfferKind
+  status: OfferStatus
+  guestName: string
+  checkIn: string
+  checkOut: string
+  nights: number
+  guestCount: number
+  pricing: BookingPricing
+  originalTotalAud: number
+  amountDueAud: number
+  refundDueAud?: number
+  note?: string
+  inclusions?: string
+  expiresAt: string
+  acceptedAt?: string
 }
 
 export interface PublicBookingSummary {
