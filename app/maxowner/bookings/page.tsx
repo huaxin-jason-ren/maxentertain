@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { BookingRecord, BookingStatus } from '@/types/booking'
+import { discoverySourceLabel } from '@/lib/discovery'
 
 const STATUS_OPTIONS: Array<{ id: 'all' | BookingStatus; label: string }> = [
   { id: 'all', label: 'All' },
@@ -324,6 +325,16 @@ export default function OwnerBookingsPage() {
                         : '—'}
                     </p>
                     <p>Security bond: {bondLabel(booking.bond)}</p>
+                    <p>
+                      Found us via:{' '}
+                      {booking.discovery
+                        ? booking.discovery.source
+                          ? `${discoverySourceLabel(booking.discovery.source)}${booking.discovery.sourceOther ? ` — ${booking.discovery.sourceOther}` : ''}`
+                          : booking.discovery.utmSource
+                            ? `UTM: ${booking.discovery.utmSource}`
+                            : booking.discovery.referrer || '—'
+                        : '—'}
+                    </p>
                   </div>
                   {booking.refundAmountAud ? (
                     <p className="mt-2 text-sm text-purple-300">Refunded: ${booking.refundAmountAud.toLocaleString()}</p>

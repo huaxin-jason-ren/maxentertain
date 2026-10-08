@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const [docs, total] = await Promise.all([
     col
-      .find({}, { projection: { _id: 1, name: 1, email: 1, phone: 1, checkIn: 1, checkOut: 1, guests: 1, message: 1, receivedAt: 1, status: 1 } })
+      .find({}, { projection: { _id: 1, name: 1, email: 1, phone: 1, checkIn: 1, checkOut: 1, guests: 1, message: 1, discovery: 1, receivedAt: 1, status: 1 } })
       .sort({ receivedAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)

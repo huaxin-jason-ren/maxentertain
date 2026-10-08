@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { propertyConfig } from '@/config/property'
 import { BOND_AMOUNT_AUD } from '@/lib/pricing'
 import type { BookingRecord, GuestRecord, SpecialOfferRecord } from '@/types/booking'
+import { discoverySourceLabel, type DiscoveryAttribution } from '@/lib/discovery'
 
 const PRE_STAY_SUBJECTS: Record<number, string> = {
   14: 'Your MAX Entertain stay is in two weeks',
@@ -22,6 +23,10 @@ function getFromEmail() {
 
 function getOwnerEmail() {
   return process.env.OWNER_NOTIFICATION_EMAIL ?? propertyConfig.contact.email
+}
+
+function getReplyToEmail() {
+  return process.env.BOOKING_REPLY_TO_EMAIL ?? '1975pointnepean@gmail.com'
 }
 
 function money(amount: number) {
@@ -63,7 +68,7 @@ async function sendEmail(params: {
     subject: params.subject,
     html: params.html,
     text: params.text,
-    ...(params.replyTo ? { replyTo: params.replyTo } : {}),
+    replyTo: params.replyTo ?? getReplyToEmail(),
   })
   // Resend returns { data, error } and does NOT throw on API errors
   // (e.g. unverified sender domain). Surface those as real errors.
@@ -456,6 +461,7 @@ export async function sendInquiryReceivedEmails(
     checkOut: string
     guests: string
     message: string
+    discovery?: DiscoveryAttribution
   },
   options?: { notifyGuest?: boolean }
 ) {
@@ -467,6 +473,15 @@ export async function sendInquiryReceivedEmails(
   const guests = escapeHtml(input.guests)
   const message = escapeHtml(input.message)
   const propertyName = escapeHtml(propertyConfig.name)
+  const discoveryLabel = input.discovery?.source
+    ? discoverySourceLabel(input.discovery.source)
+    : input.discovery?.utmSource || input.discovery?.referrer
+      ? 'Automatically attributed'
+      : 'Not provided'
+  const discoveryDetail = input.discovery?.sourceOther
+    || input.discovery?.utmSource
+    || input.discovery?.referrer
+    || ''
   const notifyGuest = options?.notifyGuest !== false
 
   const ownerText = [
@@ -477,6 +492,7 @@ export async function sendInquiryReceivedEmails(
     `Dates: ${input.checkIn} to ${input.checkOut}`,
     `Guests: ${input.guests}`,
     `Message: ${input.message}`,
+    `How they found us: ${discoveryLabel}${discoveryDetail ? ` — ${discoveryDetail}` : ''}`,
   ].join('\n')
 
   await sendEmail({
@@ -490,6 +506,7 @@ export async function sendInquiryReceivedEmails(
       <p><strong>Dates:</strong> ${checkIn} to ${checkOut}</p>
       <p><strong>Guests:</strong> ${guests}</p>
       <p><strong>Message:</strong> ${message}</p>
+      <p><strong>How they found us:</strong> ${escapeHtml(discoveryLabel)}${discoveryDetail ? ` — ${escapeHtml(discoveryDetail)}` : ''}</p>
     `,
     text: ownerText,
   })

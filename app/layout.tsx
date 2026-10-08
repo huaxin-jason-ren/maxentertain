@@ -9,6 +9,7 @@ import ThemeProvider from '@/components/ThemeProvider'
 import JsonLd from '@/components/JsonLd'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import AttributionCapture from '@/components/AttributionCapture'
 
 const josefin = Josefin_Sans({
   subsets: ['latin'],
@@ -108,6 +109,7 @@ export default function RootLayout({
         </Script>
       </head>
       <body className="font-sans antialiased">
+        <AttributionCapture />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[200] focus:px-4 focus:py-2 focus:bg-luxury-gold focus:text-black focus:rounded-lg focus:font-semibold"

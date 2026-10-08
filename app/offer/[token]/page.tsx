@@ -3,6 +3,7 @@ import BookingSummary from '@/components/BookingSummary'
 import { propertyConfig } from '@/config/property'
 import { getOfferByToken, toPublicOffer } from '@/lib/offers'
 import AcceptOfferButton from './AcceptOfferButton'
+import DiscoverySurvey from '@/components/DiscoverySurvey'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,6 +36,9 @@ export default async function SpecialOfferPage({
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-luxury-gold">Payment received</p>
             <h1 className="mt-3 font-serif text-4xl font-bold dark:text-white">{offer.kind === 'extension' ? 'Your booking amendment is confirmed' : 'Your booking is confirmed'}</h1>
             <p className="mt-4 text-gray-700 dark:text-gray-300">A confirmation email is on its way to you. Thank you for choosing {propertyConfig.name}.</p>
+            {offer.kind === 'new_booking' ? (
+              <DiscoverySurvey endpoint={`/api/offers/${encodeURIComponent(params.token)}/discovery`} />
+            ) : null}
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-12">

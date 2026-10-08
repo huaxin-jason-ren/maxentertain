@@ -1,4 +1,5 @@
 import type { NightBreakdown } from '@/lib/pricing'
+import type { DiscoveryAttribution } from '@/lib/discovery'
 
 export type BookingStatus =
   | 'pending_payment'
@@ -133,6 +134,7 @@ export interface BookingRecord {
   arrival?: BookingArrival
   agreement?: BookingAgreement
   bond?: BookingBond
+  discovery?: DiscoveryAttribution
 }
 
 export type OfferKind = 'new_booking' | 'extension'

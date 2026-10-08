@@ -7,6 +7,8 @@ import { useAvailability } from '@/hooks/useAvailability'
 import DatePicker from '@/components/DatePicker'
 import { trackClick } from '@/lib/analytics'
 import { nightsIncludeBlocked } from '@/lib/stay-nights'
+import { DISCOVERY_SOURCE_OPTIONS } from '@/lib/discovery'
+import { getDiscoveryContext } from '@/lib/discovery-client'
 
 interface FormData {
   name: string
@@ -16,6 +18,8 @@ interface FormData {
   checkOut: string
   guests: string
   message: string
+  discoverySource: string
+  discoverySourceOther: string
 }
 
 type InquiryFormVariant = 'default' | 'glass'
@@ -43,6 +47,8 @@ export default function InquiryForm({
     checkOut: '',
     guests: '',
     message: '',
+    discoverySource: '',
+    discoverySourceOther: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
@@ -205,6 +211,11 @@ export default function InquiryForm({
           checkOut: formData.checkOut,
           guests: formData.guests,
           message: formData.message,
+          discovery: {
+            ...getDiscoveryContext(),
+            source: formData.discoverySource || undefined,
+            sourceOther: formData.discoverySourceOther || undefined,
+          },
         }),
       })
 
@@ -226,6 +237,8 @@ export default function InquiryForm({
         checkOut: '',
         guests: '',
         message: '',
+        discoverySource: '',
+        discoverySourceOther: '',
       })
       setErrors({})
     } catch (error) {
@@ -466,6 +479,32 @@ export default function InquiryForm({
                   {errors.message && (
                     <p className="text-red-600 text-base mt-1">{errors.message}</p>
                   )}
+                </div>
+
+                <div>
+                  <label htmlFor="discoverySource" className={`block text-base font-semibold mb-2 ${isGlass ? 'text-white/90' : 'text-gray-800'}`}>
+                    How did you find this website? <span className="font-normal opacity-70">(optional)</span>
+                  </label>
+                  <select
+                    id="discoverySource"
+                    value={formData.discoverySource}
+                    onChange={(e) => handleChange('discoverySource', e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-luxury-gold transition-all bg-white text-black text-base"
+                  >
+                    <option value="">Select an option</option>
+                    {DISCOVERY_SOURCE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  {formData.discoverySource === 'other' ? (
+                    <input
+                      type="text"
+                      value={formData.discoverySourceOther}
+                      onChange={(e) => handleChange('discoverySourceOther', e.target.value)}
+                      placeholder="Please tell us where"
+                      className="mt-3 w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-luxury-gold transition-all bg-white text-black text-base"
+                    />
+                  ) : null}
                 </div>
 
                 {submitStatus === 'error' && (

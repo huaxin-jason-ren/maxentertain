@@ -17,6 +17,7 @@ import { getSiteUrl } from '@/lib/site'
 import { sendBookingRecoveryEmail } from '@/lib/email'
 import { MIN_ADVANCE_DAYS, MAX_OCCUPANCY, earliestCheckInStr, latestCheckInStr, MAX_BOOKING_HORIZON_MONTHS } from '@/lib/booking-window'
 import { nightDates } from '@/lib/stay-nights'
+import type { DiscoveryAttribution } from '@/lib/discovery'
 
 export const PROPERTY_ID = 'maxentertain'
 export const PENDING_HOLD_MINUTES = 30
@@ -52,6 +53,7 @@ export interface CreatePendingBookingInput {
   rulesAccepted: boolean
   /** Client IP captured at acceptance time (evidence of consent). */
   agreementIp?: string
+  discovery?: DiscoveryAttribution
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -321,6 +323,7 @@ export async function createPendingBooking(input: CreatePendingBookingInput) {
     createdAt: now,
     updatedAt: now,
     comms: { commsEventsSent: [] },
+    discovery: input.discovery,
   }
 
   const locks = nightDates.map((date) => ({

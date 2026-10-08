@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
+import { discoverySourceLabel, type DiscoveryAttribution } from '@/lib/discovery'
 
 type Status = 'new' | 'replied' | 'booked'
 
@@ -16,6 +17,7 @@ interface Inquiry {
   message: string
   receivedAt: string
   status: Status
+  discovery?: DiscoveryAttribution
 }
 
 const STATUS_STYLE: Record<Status, string> = {
@@ -179,6 +181,15 @@ export default function InquiriesPage() {
                       <p className="text-gray-300 text-sm leading-relaxed bg-black/20 rounded-lg px-4 py-3">{inq.message}</p>
                     </div>
                   )}
+                  {inq.discovery ? (
+                    <div className="mb-4 rounded-lg bg-black/20 px-4 py-3 text-sm text-gray-300">
+                      <span className="text-gray-500">Found us via: </span>
+                      {discoverySourceLabel(inq.discovery.source)}
+                      {inq.discovery.sourceOther ? ` — ${inq.discovery.sourceOther}` : ''}
+                      {!inq.discovery.source && inq.discovery.utmSource ? ` — UTM: ${inq.discovery.utmSource}` : ''}
+                      {!inq.discovery.source && !inq.discovery.utmSource && inq.discovery.referrer ? ` — ${inq.discovery.referrer}` : ''}
+                    </div>
+                  ) : null}
 
                   {offerFor === inq._id ? (
                     <div className="mb-4 grid gap-3 rounded-lg border border-luxury-gold/20 bg-luxury-gold/5 p-4 md:grid-cols-2">

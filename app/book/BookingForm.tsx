@@ -7,6 +7,7 @@ import { PET_FEE_AUD, BOND_AMOUNT_AUD } from '@/lib/pricing'
 import { MAX_OCCUPANCY } from '@/lib/booking-window'
 import BookingSummary from '@/components/BookingSummary'
 import CancellationPolicy from '@/components/CancellationPolicy'
+import { getDiscoveryContext } from '@/lib/discovery-client'
 
 const GROUP_OPTIONS: { value: BookingGroupType; label: string }[] = [
   { value: 'family', label: 'Multi-generational family stay' },
@@ -64,6 +65,7 @@ export default function BookingForm({
       withPet,
       message: String(form.get('message') ?? ''),
       rulesAccepted: form.get('rulesAccepted') === 'on',
+      discovery: getDiscoveryContext(),
     }
 
     try {

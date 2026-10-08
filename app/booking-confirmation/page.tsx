@@ -3,6 +3,7 @@ import BookingSummary from '@/components/BookingSummary'
 import CancellationPolicy from '@/components/CancellationPolicy'
 import { getBookingById, getBookingByStripeSession, toPublicBookingSummary } from '@/lib/bookings'
 import { getStripe } from '@/lib/stripe'
+import DiscoverySurvey from '@/components/DiscoverySurvey'
 
 export default async function BookingConfirmationPage({
   searchParams,
@@ -94,6 +95,9 @@ export default async function BookingConfirmationPage({
                   </a>
                 ) : null}
               </div>
+              {sessionId ? (
+                <DiscoverySurvey endpoint={`/api/bookings/${encodeURIComponent(summary.id)}?session_id=${encodeURIComponent(sessionId)}`} />
+              ) : null}
             </section>
 
             <aside className="space-y-5 lg:col-span-5">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { sendInquiryReceivedEmails } from '@/lib/email'
 import { getClientIp, rateLimitDurable } from '@/lib/rateLimit'
+import { normaliseDiscovery } from '@/lib/discovery'
 
 const MAX_LENGTHS = {
   name: 200,
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
     const message = cleanField(body.message, MAX_LENGTHS.message)
     const checkIn = cleanField(body.checkIn, 10)
     const checkOut = cleanField(body.checkOut, 10)
+    const discovery = normaliseDiscovery(body.discovery)
 
     if (!name || !email || !checkIn || !checkOut) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -65,6 +67,7 @@ export async function POST(req: NextRequest) {
       message,
       receivedAt: new Date(),
       status: 'new',
+      discovery,
     })
 
     await sendInquiryReceivedEmails({
@@ -75,6 +78,7 @@ export async function POST(req: NextRequest) {
       checkOut,
       guests,
       message,
+      discovery,
     })
 
     return NextResponse.json({ ok: true })
